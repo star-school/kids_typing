@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タイピング・マスター・クエスト</title>
+    <style>
+        :root {
+            --primary: #3498db; --success: #2ecc71; --warning: #f1c40f; --danger: #e74c3c;
+            --bg-main: #f0f7ff;
+            /* 指使いカラー */
+            --f-pinky: #ff5e57; --f-ring: #2ed573; --f-middle: #48c1fb; --f-index: #feb72b; --f-vowel-o: #a55eea;
+            /* ローマ字専用 */
+            --color-a: #ff5e57; --color-i: #48c1fb; --color-u: #feb72b; --color-e: #2ed573; --color-o: #a55eea;
+        }
+
+        body { font-family: 'Hiragino Kaku Gothic Pro', 'Meiryo', sans-serif; margin: 0; padding: 0; background-color: var(--bg-main); overflow-x: hidden; display: flex; flex-direction: column; align-items: center; }
+
+        /* ナビゲーション */
+        #portal-nav { width: 100%; background: white; padding: 10px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 2000; }
+        .back-btn { background: #95a5a6; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; display: none; }
+
+        /* ポータル画面 */
+        #portal-screen { padding: 40px 20px; text-align: center; max-width: 1000px; width: 100%; }
+        .portal-title { font-size: 42px; color: #2c3e50; margin-bottom: 40px; }
+        .steps-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 20px; }
+        .step-card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.3s; border: 4px solid transparent; display: flex; flex-direction: column; align-items: center; }
+        .step-card:hover { transform: translateY(-10px); border-color: var(--primary); }
+        .step-num { background: var(--primary); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-bottom: 15px; }
+
+        /* 各アプリセクションとオーバーレイ */
+        .app-section { display: none; width: 100%; min-height: calc(100vh - 60px); flex-direction: column; align-items: center; padding: 20px; }
+        .app-section.active { display: flex; }
+        .overlay { position: fixed; top: 60px; left: 0; width: 100%; height: calc(100% - 60px); background: rgba(255,255,255,0.98); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1500; text-align: center; }
+        .btn { padding: 15px 40px; font-size: 20px; cursor: pointer; border-radius: 50px; border: none; background: var(--primary); color: white; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: 0.2s; }
+        .btn:hover { transform: scale(1.05); }
+
+        /* 共通設定パネルUI */
+        .setting-card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 90%; max-width: 450px; text-align: left; margin: 15px 0; }
+        .setting-item { margin-bottom: 15px; }
+        .setting-item label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 16px; color: #34495e; }
+        .btn-group { display: flex; gap: 8px; justify-content: center; }
+        .opt-btn { flex: 1; padding: 10px; border: 2px solid #ddd; background: #eee; border-radius: 12px; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+        .opt-btn.selected { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 0 #2980b9; transform: translateY(-2px); }
+
+        /* PROGRESS MAP スタイル */
+        .collection-container { margin-bottom: 20px; padding: 15px; background: #d1d8e0; border-radius: 20px; width: 95%; max-width: 600px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+        .collection-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 10px; }
+        .layout-switch-btn { padding: 4px 10px; font-size: 11px; background: white; border: 1px solid #ccc; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .layout-switch-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .collection-grid { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .map-row { display: flex; gap: 4px; justify-content: center; width: 100%; }
+        .char-slot { width: 28px; height: 34px; background: white; border: 2px solid #ccc; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-weight: bold; color: #bbb; font-size: 12px; transition: 0.3s; }
+        .char-slot.active { color: white; border-width: 2px; }
+        .char-slot.active:not([class*="fill-"]) { background: var(--warning); border-color: #f39c12; }
+        .char-slot.active.fill-a { background: var(--f-pinky) !important; border-color: var(--f-pinky); }
+        .char-slot.active.fill-e { background: var(--f-ring) !important; border-color: var(--f-ring); }
+        .char-slot.active.fill-u { background: var(--f-index) !important; border-color: var(--f-index); }
+        .char-slot.active.fill-i { background: var(--f-middle) !important; border-color: var(--f-middle); }
+        .char-slot.active.fill-o { background: var(--f-vowel-o) !important; border-color: var(--f-vowel-o); }
+        .border-pinky { border-color: var(--f-pinky); } .border-ring { border-color: var(--f-ring); } .border-middle { border-color: var(--f-middle); } .border-index { border-color: var(--f-index); }
+
+        /* キーボード */
+        .keyboard-area { margin-top: 15px; background: #dfe4ea; padding: 12px; border-radius: 15px; width: fit-content; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .key-row { display: flex; justify-content: center; margin-bottom: 6px; }
+        .key { width: 38px; height: 45px; background: #fff; border-radius: 8px; margin: 3px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border-bottom: 4px solid #bdc3c7; transition: 0.1s; }
+        .pressed { transform: translateY(2px); border-bottom-width: 1px; background: #95a5a6 !important; color: white; }
+
+        /* ゲーム用・ローマ字 */
+        .game-container { position: relative; width: 450px; height: 400px; background: #fff; border: 6px solid #333; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .judgment-zone { position: absolute; bottom: 30px; width: 100%; height: 70px; border-top: 3px dashed #2ecc71; border-bottom: 3px dashed #2ecc71; background: rgba(46, 213, 115, 0.1); z-index: 1; }
+        .block { position: absolute; width: 75px; height: 85px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 2; transition: transform 0.1s; }
+        .block.waiting-vowel { border: 4px solid #fff; transform: scale(1.1); box-shadow: 0 0 15px rgba(255,255,255,0.8); }
+        .hit-effect { position: absolute; font-size: 24px; font-weight: bold; pointer-events: none; animation: floatUp 0.5s forwards; z-index: 10; }
+        @keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-40px); } }
+
+        /* App 1 Quiz */
+        #app-abc-b .choices-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 90%; max-width: 400px; }
+        #app-abc-b .choice-card { background: white; border: 3px solid #eee; border-radius: 15px; padding: 20px 0; font-size: 36px; font-weight: bold; cursor: pointer; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: 0.2s; }
+        #app-abc-b .choice-card:hover { border-color: var(--primary); }
+        #app-abc-b .choice-card.correct { background: var(--success); color: white; border-color: var(--success); animation: pop 0.3s; }
+        #app-abc-b .choice-card.wrong { background: var(--danger); color: white; border-color: var(--danger); }
+        @keyframes pop { 50% { transform: scale(1.1); } }
+
+        /* App 2 matching */
+        #app-abc-s .game-board { display: flex; gap: 40px; padding: 25px; background: white; border-radius: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); }
+        #app-abc-s .draggable { width: 85px; height: 95px; background: var(--primary); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 12px; cursor: grab; box-shadow: 0 5px 0 #2980b9; }
+        #app-abc-s .draggable:active { transform: translateY(4px); box-shadow: none; }
+        #app-abc-s .dropzone { width: 100px; height: 90px; border: 2px dashed #cbd5e0; display: flex; justify-content: center; align-items: center; font-size: 46px; font-weight: bold; color: #cbd5e0; border-radius: 15px; }
+        #app-abc-s .dropzone.success { border-style: solid; border-color: var(--success); color: var(--success); background: #eafaf1; animation: pop 0.3s; }
+        #abc-s-next { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); z-index: 500; background: linear-gradient(135deg, var(--warning), #f39c12); box-shadow: 0 10px 25px rgba(243, 156, 18, 0.4); font-size: 24px; padding: 20px 60px; visibility: hidden; opacity: 0; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #abc-s-next.show { visibility: visible; opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* リザルト用共通スタイル */
+        .result-card { background: white; padding: 30px; border-radius: 24px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); text-align: center; width: 90%; max-width: 450px; max-height: 80vh; overflow-y: auto; margin-bottom: 20px; }
+        .stat-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed #eee; font-size: 18px; }
+        .v-bar-container { height: 10px; background: #eee; border-radius: 5px; overflow: hidden; margin: 5px 0 15px 0; }
+        .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 15px; }
+        .stat-box { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 5px; text-align: center; }
+        .stat-bar-bg { height: 4px; background: #ddd; border-radius: 2px; margin-top: 4px; overflow: hidden; }
+        .miss-tag { display: inline-block; background: #ff7675; color: white; padding: 4px 10px; border-radius: 6px; margin: 3px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <nav id="portal-nav">
+        <div style="font-weight: bold; color: #2c3e50;">?? <span id="nav-title">がくしゅうメニュー</span></div>
+        <button class="back-btn" id="global-back-btn" onclick="returnToPortal()">メニューにもどる</button>
+    </nav>
+
+    <!-- ポータル画面 -->
+    <div id="portal-screen">
+        <h1 class="portal-title">パソコン・タイピング<br><small>マスターへのみち</small></h1>
+        <div class="steps-container">
+            <div class="step-card" onclick="startApp(1)">
+                <div class="step-num">1</div><div class="icon">???</div>
+                <h3>アルファベット（大文字）</h3><p>まずはABCの形をおぼえよう！<br>声といっしょにえらんでね。</p>
+            </div>
+            <div class="step-card" onclick="startApp(2)">
+                <div class="step-num">2</div><div class="icon">??</div>
+                <h3>アルファベット（小文字）</h3><p>大文字と小文字をあわせよう！<br>パズルみたいに運ぶよ。</p>
+            </div>
+            <div class="step-card" onclick="startApp(3)">
+                <div class="step-num">3</div><div class="icon">??</div>
+                <h3>ローマ字（あいうえお）</h3><p>基本の「あいうえお」を打とう！<br>タイミングをあわせてね。</p>
+            </div>
+            <div class="step-card" onclick="startApp(4)">
+                <div class="step-num">4</div><div class="icon">??</div>
+                <h3>ローマ字（子音＋母音）</h3><p>「か・さ・た・な」を練習！<br>キーを2回打つわざをマスター。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- App 1: Alphabet Recognition -->
+    <section id="app-abc-b" class="app-section">
+        <div id="abc-b-start" class="overlay">
+            <h2 class="main-title">アルファベット クイズ</h2>
+            <div class="setting-card">
+                <div class="setting-item">
+                    <label>こえの しゅるい を えらんでね</label>
+                    <div class="btn-group">
+                        <button class="opt-btn selected" id="b-btn-ja" onclick="setApp1Voice('kana')">日本語よみ</button>
+                        <button class="opt-btn" id="b-btn-en" onclick="setApp1Voice('native')">Native (English)</button>
+                    </div>
+                </div>
+            </div>
+            <button class="btn" style="background:var(--success);" onclick="initApp1()">スタート！</button>
+        </div>
+
+        <div class="collection-container">
+            <div class="collection-header">
+                <div style="font-size:11px; color:#666; font-weight:bold;">PROGRESS MAP</div>
+                <div>
+                    <button class="layout-switch-btn active" id="b-map-abc" onclick="switchMapLayout(1, 'abc')">ABC順</button>
+                    <button class="layout-switch-btn" id="b-map-kbd" onclick="switchMapLayout(1, 'kbd')">キーボード</button>
+                </div>
+            </div>
+            <div class="collection-grid" id="abc-b-map-grid"></div>
+        </div>
+
+        <div style="text-align:center;">
+            <button class="speaker-btn" onclick="playApp1Target()" style="width:80px; height:80px; border-radius:50%; background:var(--primary); color:white; border:none; font-size:40px; cursor:pointer; box-shadow:0 6px 0 #2980b9; transition:0.1s;">??</button>
+            <div id="abc-b-display" style="font-size:28px; font-weight:bold; margin:10px 0; background:#fff; padding:5px 25px; border-radius:30px; border:2px solid #eee; display:inline-block; min-width:140px;">？</div>
+            <div class="choices-grid" id="abc-b-choices"></div>
+            <div id="abc-b-msg" style="margin-top:15px; font-size:18px; font-weight:bold; height:24px; color:#7f8c8d;"></div>
+        </div>
+    </section>
+
+    <!-- App 2: Alphabet Matching -->
+    <section id="app-abc-s" class="app-section">
+        <div id="abc-s-start" class="overlay">
+            <h2 class="main-title">アルファベット パズル</h2>
+            <p style="color:#7f8c8d; font-size:18px; margin-bottom:25px;">大文字を、おなじ小文字のところに<br>マウスではこんでね！</p>
+            <button class="btn" style="background:var(--success);" onclick="initApp2()">ぼうけん を はじめる</button>
+        </div>
+
+        <div class="collection-container">
+            <div class="collection-header">
+                <div style="font-size:11px; color:#666; font-weight:bold;">PROGRESS MAP</div>
+                <div>
+                    <button class="layout-switch-btn active" id="s-map-abc" onclick="switchMapLayout(2, 'abc')">ABC順</button>
+                    <button class="layout-switch-btn" id="s-map-kbd" onclick="switchMapLayout(2, 'kbd')">キーボード</button>
+                </div>
+            </div>
+            <div class="collection-grid" id="abc-s-map-grid"></div>
+        </div>
+
+        <div style="text-align:center;">
+            <div id="abc-s-msg" style="font-size:18px; margin-bottom:15px; font-weight:bold; color:#7f8c8d;">おおもじ を はこぼう！</div>
+            <div class="game-board">
+                <div id="abc-s-sources" style="display:flex; flex-direction:column; gap:12px;"></div>
+                <div id="abc-s-targets" style="display:flex; flex-direction:column; gap:12px;"></div>
+            </div>
+            <button id="abc-s-next" class="btn" onclick="startApp2Round()">つぎの ステージへ！ ??</button>
+        </div>
+    </section>
+
+    <!-- App 3: Romanji Vowels -->
+    <section id="app-roman1" class="app-section">
+        <div id="roman1-start" class="overlay">
+            <h2 class="main-title">ローマじクエスト (母音)</h2>
+            <div class="setting-card">
+                <div class="setting-item">
+                    <label>1. はやさを えらぼう</label>
+                    <div class="btn-group">
+                        <button class="opt-btn r1-spd" onclick="setApp3Config('speed', 'slow', this)">ゆっくり</button>
+                        <button class="opt-btn r1-spd selected" onclick="setApp3Config('speed', 'normal', this)">ふつう</button>
+                        <button class="opt-btn r1-spd" onclick="setApp3Config('speed', 'fast', this)">はやい</button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label>2. あそぶじかん</label>
+                    <div class="btn-group">
+                        <button class="opt-btn r1-time" onclick="setApp3Config('time', 30, this)">30びょう</button>
+                        <button class="opt-btn r1-time selected" onclick="setApp3Config('time', 60, this)">60びょう</button>
+                        <button class="opt-btn r1-time" onclick="setApp3Config('time', 90, this)">90びょう</button>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn" style="background:#3498db;" onclick="initApp3('time')">タイムチャレンジ</button>
+                <button class="btn" style="background:#e67e22;" onclick="initApp3('nomiss')">のーみす チャレンジ</button>
+            </div>
+        </div>
+        <div class="app-content">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:20px; width:450px; margin-bottom:5px;">
+                <div id="r1-timer" style="color:#e74c3c;">のこり: 60</div>
+                <div id="r1-score">00000</div>
+            </div>
+            <div id="r1-combo" style="height:30px; color:#e67e22; font-size:24px; text-shadow:1px 1px 0 white; text-align:center; font-weight:bold; width:450px;"></div>
+            <div class="game-container" id="r1-container">
+                <div class="judgment-zone"></div>
+            </div>
+            <div id="r1-keyboard" class="keyboard-area"></div>
+        </div>
+    </section>
+
+    <!-- App 4: Romanji Consonants -->
+    <section id="app-roman2" class="app-section">
+        <div id="roman2-start" class="overlay">
+            <h2 class="main-title">ローマじ・ますたー (子音)</h2>
+            <div class="setting-card">
+                <div class="setting-item">
+                    <label>1. れんしゅうする「ぎょう」</label>
+                    <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:10px; background:#f8f9fa; padding:15px; border-radius:10px; border:1px solid #ddd;" id="r2-rows-checks">
+                        <label><input type="checkbox" value="" checked> あ行</label>
+                        <label><input type="checkbox" value="k" checked> か行</label>
+                        <label><input type="checkbox" value="s" checked> さ行</label>
+                        <label><input type="checkbox" value="t" checked> た行</label>
+                        <label><input type="checkbox" value="n"> な行</label>
+                        <label><input type="checkbox" value="h"> は行</label>
+                        <label><input type="checkbox" value="m"> ま行</label>
+                        <label><input type="checkbox" value="y"> や行</label>
+                        <label><input type="checkbox" value="r"> ら行</label>
+                        <label><input type="checkbox" value="w"> わ行</label>
+                    </div>
+                    <button onclick="toggleR2Checks()" style="margin-top:5px; font-size:12px; cursor:pointer; padding:5px;">ぜんぶ えらぶ / はずす</button>
+                </div>
+                <div class="setting-item">
+                    <label>2. はやさを えらぼう</label>
+                    <div class="btn-group">
+                        <button class="opt-btn r2-spd" onclick="setApp4Config('speed', 0.8, this)">ゆっくり</button>
+                        <button class="opt-btn r2-spd selected" onclick="setApp4Config('speed', 1.5, this)">ふつう</button>
+                        <button class="opt-btn r2-spd" onclick="setApp4Config('speed', 2.5, this)">はやい</button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label>3. あそぶ じかん</label>
+                    <div class="btn-group">
+                        <button class="opt-btn r2-time" onclick="setApp4Config('time', 30, this)">30びょう</button>
+                        <button class="opt-btn r2-time selected" onclick="setApp4Config('time', 60, this)">60びょう</button>
+                        <button class="opt-btn r2-time" onclick="setApp4Config('time', 90, this)">90びょう</button>
+                    </div>
+                </div>
+            </div>
+            <button class="btn" style="background:var(--success); width:90%; max-width:450px;" onclick="initApp4()">しゅっぱつ！</button>
+        </div>
+        <div class="app-content">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:20px; width:450px; margin-bottom:5px;">
+                <div id="r2-timer" style="color:#e74c3c;">のこり: 60</div>
+                <div id="r2-score">00000</div>
+            </div>
+            <div id="r2-combo" style="height:30px; color:#e67e22; font-size:24px; text-shadow:1px 1px 0 white; text-align:center; font-weight:bold; width:450px;"></div>
+            <div class="game-container" id="r2-container">
+                <div class="judgment-zone"></div>
+            </div>
+            <div id="r2-keyboard" class="keyboard-area"></div>
+        </div>
+    </section>
+
+    <!-- 共通リザルト -->
+    <div id="global-result" class="overlay" style="display:none; z-index:2500;">
+        <h2 id="result-title" style="color:var(--primary); font-size:36px;">けっか</h2>
+        <div id="result-content" class="result-card"></div>
+        <button class="btn" onclick="returnToPortal()">メニューにもどる</button>
+    </div>
+
+    <script>
+        /**
+         * 共通 AudioContext & ナビゲーション
+         */
+        let audioCtx;
+        function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+
+        const alphaData = {
+            'A': { read: 'えー', finger: 'pinky', fill: 'fill-a' }, 'B': { read: 'びー', finger: 'index' },
+            'C': { read: 'しー', finger: 'middle' }, 'D': { read: 'でー', finger: 'middle' },
+            'E': { read: 'いー', finger: 'ring', fill: 'fill-e' }, 'F': { read: 'えふ', finger: 'index' },
+            'G': { read: 'じー', finger: 'index' }, 'H': { read: 'えいち', finger: 'index' },
+            'I': { read: 'あい', finger: 'middle', fill: 'fill-i' }, 'J': { read: 'じぇー', finger: 'index' },
+            'K': { read: 'けー', finger: 'middle' }, 'L': { read: 'える', finger: 'ring' },
+            'M': { read: 'えむ', finger: 'index' }, 'N': { read: 'えぬ', finger: 'index' },
+            'O': { read: 'おー', finger: 'ring', fill: 'fill-o' }, 'P': { read: 'ぴー', finger: 'pinky' },
+            'Q': { read: 'きゅー', finger: 'pinky' }, 'R': { read: 'あーる', finger: 'index' },
+            'S': { read: 'えす', finger: 'ring' }, 'T': { read: 'てぃー', finger: 'index' },
+            'U': { read: 'ゆー', finger: 'index', fill: 'fill-u' }, 'V': { read: 'ぶい', finger: 'index' },
+            'W': { read: 'だぶりゅー', finger: 'ring' }, 'X': { read: 'えっくす', finger: 'ring' },
+            'Y': { read: 'わい', finger: 'index' }, 'Z': { read: 'ぜっと', finger: 'pinky' }
+        };
+
+        const kbdRows = [
+            ["Q","W","E","R","T","Y","U","I","O","P"],
+            ["A","S","D","F","G","H","J","K","L"],
+            ["Z","X","C","V","B","N","M"]
+        ];
+
+        let currentMapLayout = 'abc';
+
+        function startApp(num) {
+            initAudio();
+            document.getElementById('portal-screen').style.display = 'none';
+            document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('global-back-btn').style.display = 'block';
+            
+            const titles = ["", "アルファベット クイズ", "アルファベット パズル", "ローマ字（母音）", "ローマ字（子音）"];
+            document.getElementById('nav-title').innerText = titles[num];
+
+            if(num === 1) { document.getElementById('app-abc-b').classList.add('active'); renderCollectionMap(1); }
+            if(num === 2) { document.getElementById('app-abc-s').classList.add('active'); renderCollectionMap(2); }
+            if(num === 3) { document.getElementById('app-roman1').classList.add('active'); setupKeyboard('r1-keyboard'); }
+            if(num === 4) { document.getElementById('app-roman2').classList.add('active'); setupKeyboard('r2-keyboard'); }
+        }
+
+        function returnToPortal() {
+            stopAllApps();
+            document.getElementById('global-result').style.display = 'none';
+            document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('abc-b-start').style.display = 'flex';
+            document.getElementById('abc-s-start').style.display = 'flex';
+            document.getElementById('roman1-start').style.display = 'flex';
+            document.getElementById('roman2-start').style.display = 'flex';
+            document.getElementById('portal-screen').style.display = 'block';
+            document.getElementById('global-back-btn').style.display = 'none';
+            document.getElementById('nav-title').innerText = "がくしゅうメニュー";
+        }
+
+        function stopAllApps() {
+            if(app3_state.interval) clearInterval(app3_state.interval);
+            if(app3_state.spawnTimer) clearTimeout(app3_state.spawnTimer);
+            app3_state.isGameActive = false;
+            if(app4_state.interval) clearInterval(app4_state.interval);
+            if(app4_state.spawnInterval) clearInterval(app4_state.spawnInterval);
+            app4_state.isGameActive = false;
+            speechSynthesis.cancel();
+        }
+
+        function showGlobalResult(title, htmlContent) {
+            document.getElementById('result-title').innerText = title;
+            document.getElementById('result-content').innerHTML = htmlContent;
+            document.getElementById('global-result').style.display = 'flex';
+        }
+
+        /**
+         * PROGRESS MAP
+         */
+        let app1_cleared = new Set();
+        let app2_cleared = new Set();
+
+        function switchMapLayout(appNum, layout) {
+            currentMapLayout = layout;
+            const prefix = appNum === 1 ? 'b-' : 's-';
+            document.getElementById(`${prefix}map-abc`).classList.toggle('active', layout === 'abc');
+            document.getElementById(`${prefix}map-kbd`).classList.toggle('active', layout === 'kbd');
+            renderCollectionMap(appNum);
+        }
+
+        function renderCollectionMap(appNum) {
+            const gridId = appNum === 1 ? 'abc-b-map-grid' : 'abc-s-map-grid';
+            const clearedSet = appNum === 1 ? app1_cleared : app2_cleared;
+            const grid = document.getElementById(gridId);
+            grid.innerHTML = "";
+
+            if(currentMapLayout === 'abc') {
+                const alpha = Object.keys(alphaData);
+                const row1 = document.createElement('div'); row1.className = 'map-row';
+                const row2 = document.createElement('div'); row2.className = 'map-row';
+                alpha.forEach((c, i) => {
+                    const slot = createSlot(c, clearedSet);
+                    if(i < 13) row1.appendChild(slot); else row2.appendChild(slot);
+                });
+                grid.appendChild(row1); grid.appendChild(row2);
+            } else {
+                kbdRows.forEach(rowArr => {
+                    const rowDiv = document.createElement('div'); rowDiv.className = 'map-row';
+                    rowArr.forEach(c => rowDiv.appendChild(createSlot(c, clearedSet)));
+                    grid.appendChild(rowDiv);
+                });
+            }
+        }
+
+        function createSlot(c, clearedSet) {
+            const s = document.createElement('div');
+            const data = alphaData[c];
+            s.className = `char-slot border-${data.finger} ${clearedSet.has(c) ? 'active' : ''} ${data.fill || ''}`;
+            s.textContent = c;
+            return s;
+        }
+
+        function playSfx(freq, dur, type='sine', vol=0.1) {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            g.gain.setValueAtTime(vol, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + dur);
+        }
+
+        /**
+         * App 1: クイズ
+         */
+        let app1_voice = 'kana';
+        let app1_target = '';
+
+        function setApp1Voice(v) {
+            app1_voice = v;
+            document.querySelectorAll('#app-abc-b .opt-btn').forEach(b => b.classList.remove('selected'));
+            document.getElementById(v==='kana' ? 'b-btn-ja' : 'b-btn-en').classList.add('selected');
+            const uttr = new SpeechSynthesisUtterance(v === 'native' ? "ABC" : "あいうえお");
+            uttr.lang = v === 'native' ? 'en-US' : 'ja-JP';
+            speechSynthesis.cancel(); speechSynthesis.speak(uttr);
+        }
+
+        function initApp1() {
+            initAudio();
+            document.getElementById('abc-b-start').style.display = 'none';
+            app1_cleared.clear(); renderCollectionMap(1); nextApp1Question();
+        }
+
+        function playApp1Target() {
+            if(!app1_target) return;
+            speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance();
+            if(app1_voice === 'native') { u.text = app1_target; u.lang = 'en-US'; u.rate = 0.8; }
+            else { u.text = alphaData[app1_target].read; u.lang = 'ja-JP'; u.rate = 1.0; }
+            speechSynthesis.speak(u);
+        }
+
+        function nextApp1Question() {
+            const keys = Object.keys(alphaData);
+            const remaining = keys.filter(k => !app1_cleared.has(k));
+            if(remaining.length === 0) {
+                showGlobalResult("MISSION COMPLETE!", "<p>ぜんぶの アルファベットを クリアしたね！</p>");
+                return;
+            }
+            document.getElementById('abc-b-msg').innerText = "";
+            app1_target = remaining[Math.floor(Math.random()*remaining.length)];
+            document.getElementById('abc-b-display').innerText = alphaData[app1_target].read;
+            
+            let choices = [app1_target];
+            while(choices.length < 4) {
+                let r = keys[Math.floor(Math.random()*keys.length)];
+                if(!choices.includes(r)) choices.push(r);
+            }
+            choices.sort(() => Math.random()-0.5);
+            
+            const cgrid = document.getElementById('abc-b-choices');
+            cgrid.innerHTML = "";
+            choices.forEach(c => {
+                const card = document.createElement('div'); card.className = 'choice-card'; card.innerText = c;
+                card.onclick = () => {
+                    if(c === app1_target) {
+                        card.classList.add('correct'); app1_cleared.add(app1_target);
+                        renderCollectionMap(1);
+                        document.getElementById('abc-b-msg').innerText = "すごい！";
+                        document.getElementById('abc-b-msg').style.color = "var(--success)";
+                        playSfx(659, 0.3);
+                        setTimeout(nextApp1Question, 1200);
+                    } else {
+                        card.classList.add('wrong'); 
+                        document.getElementById('abc-b-msg').innerText = "えらびなおそう!";
+                        document.getElementById('abc-b-msg').style.color = "var(--danger)";
+                        playSfx(150, 0.2, 'sawtooth');
+                        setTimeout(() => card.classList.remove('wrong'), 500);
+                    }
+                };
+                cgrid.appendChild(card);
+            });
+            setTimeout(playApp1Target, 300);
+        }
+
+        /**
+         * App 2: パズル
+         */
+        let app2_roundSolved = 0;
+        let app2_startTime = 0;
+        let app2_parentMisses = 0;
+        let app2_transMisses = 0;
+
+        const sfxApp2 = {
+            ok: () => { playSfx(523, 0.2); setTimeout(()=>playSfx(659, 0.3), 100); },
+            ng: () => playSfx(150, 0.3, 'sawtooth', 0.05),
+            clear: () => [523, 659, 783, 1046].forEach((f, i) => setTimeout(()=>playSfx(f, 0.4), i*100)),
+            perfect: () => [523, 659, 783, 1046, 1318].forEach((f, i) => setTimeout(()=>playSfx(f, 0.6, 'square', 0.02), i*150))
+        };
+
+        function initApp2() {
+            initAudio();
+            document.getElementById('abc-s-start').style.display = 'none';
+            app2_cleared.clear(); app2_parentMisses = 0; app2_transMisses = 0;
+            app2_startTime = Date.now();
+            renderCollectionMap(2); startApp2Round();
+        }
+
+        function startApp2Round() {
+            const src = document.getElementById('abc-s-sources');
+            const tgt = document.getElementById('abc-s-targets');
+            const nextBtn = document.getElementById('abc-s-next');
+            src.innerHTML = ""; tgt.innerHTML = ""; nextBtn.classList.remove('show');
+            app2_roundSolved = 0;
+            
+            const keys = Object.keys(alphaData);
+            const remaining = keys.filter(k => !app2_cleared.has(k));
+            if(remaining.length === 0) { showApp2Result(); return; }
+            
+            const current = remaining.sort(() => Math.random()-0.5).slice(0, 5);
+            current.forEach(c => {
+                const d = document.createElement('div'); d.className = 'draggable'; d.draggable = true;
+                d.innerHTML = `<span style="font-size:40px; font-weight:bold; line-height:1;">${c}</span><span style="font-size:14px; opacity:0.9; margin-top:4px;">${alphaData[c].read}</span>`;
+                d.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text', c);
+                    document.getElementById('abc-s-msg').innerText = "おおもじ を はこぼう！";
+                    document.getElementById('abc-s-msg').style.color = "#7f8c8d";
+                });
+                src.appendChild(d);
+            });
+
+            [...current].sort(() => Math.random()-0.5).forEach(c => {
+                const z = document.createElement('div'); z.className = 'dropzone'; z.innerText = c.toLowerCase();
+                z.addEventListener('dragover', e => e.preventDefault());
+                z.addEventListener('drop', e => {
+                    const dropped = e.dataTransfer.getData('text');
+                    if(dropped === c && !z.classList.contains('success')) {
+                        z.classList.add('success'); z.innerText = c + c.toLowerCase();
+                        app2_cleared.add(c); app2_roundSolved++; renderCollectionMap(2); sfxApp2.ok();
+                        document.querySelectorAll('#abc-s-sources .draggable').forEach(el => {
+                            if(el.querySelector('span').innerText === c) el.style.visibility = 'hidden';
+                        });
+                        
+                        // 読み上げ
+                        speechSynthesis.cancel();
+                        const u = new SpeechSynthesisUtterance(alphaData[c].read); u.lang = 'ja-JP';
+                        u.onend = () => {
+                            if(app2_cleared.size === 26) { setTimeout(showApp2Result, 500); }
+                            else if(app2_roundSolved === 5 || remaining.length <= 5) {
+                                document.getElementById('abc-s-msg').innerText = "すばらしい！";
+                                nextBtn.classList.add('show'); sfxApp2.clear();
+                            }
+                        };
+                        speechSynthesis.speak(u);
+                    } else if(dropped !== c) {
+                        const isParent = ['C','J','K','M','O','P','S','U','V','W','X','Z'].includes(c); // 元コード参考
+                        if(isParent) app2_parentMisses++; else app2_transMisses++;
+                        sfxApp2.ng();
+                        document.getElementById('abc-s-msg').innerText = "ちがう みたい！";
+                        document.getElementById('abc-s-msg').style.color = "var(--danger)";
+                    }
+                });
+                tgt.appendChild(z);
+            });
+        }
+
+        function showApp2Result() {
+            document.getElementById('abc-s-next').classList.remove('show');
+            const time = Math.floor((Date.now() - app2_startTime) / 1000);
+            const perfect = (app2_parentMisses + app2_transMisses) === 0;
+            if(perfect) sfxApp2.perfect(); else sfxApp2.clear();
+            
+            let html = `
+                <div style="font-size:32px; font-weight:bold; color:var(--warning); margin-bottom:15px;">*** ${perfect ? 'PERFECT!' : 'CLEAR!'} ***</div>
+                <div class="stat-row"><span>タイム</span> <b>${time}びょう</b></div>
+                <div class="stat-row"><span>おやこグループのミス</span> <b style="color:${app2_parentMisses>0?'var(--danger)':'inherit'}">${app2_parentMisses}かい</b></div>
+                <div class="stat-row"><span>へんしんグループのミス</span> <b style="color:${app2_transMisses>0?'var(--danger)':'inherit'}">${app2_transMisses}かい</b></div>
+                <p style="margin-top:20px; font-weight:bold; color:#2c3e50;">${perfect ? "ぜんぶ いっぱつで あてられたね！てんさい！" : "まちがえても だいじょうぶ！つぎは もっと はやくできるよ！"}</p>
+            `;
+            showGlobalResult("パズル けっか", html);
+
+            // 紙吹雪アニメーション
+            for(let i=0; i<80; i++) {
+                const c = document.createElement('div');
+                c.style.cssText = `position:fixed; width:10px; height:10px; background:hsl(${Math.random()*360},70%,60%); top:-10px; left:${Math.random()*100}vw; z-index:3000; pointer-events:none;`;
+                document.body.appendChild(c);
+                c.animate([{ transform: 'translateY(0) rotate(0)' }, { transform: `translateY(105vh) rotate(${Math.random()*720}deg)` }], { duration: 2000 + Math.random()*2000, easing: 'cubic-bezier(0,1,1,1)' }).onfinish = () => c.remove();
+            }
+        }
+
+        /**
+         * App 3: Romanji Vowels
+         */
+        let app3_state = { isGameActive: false, mode:'', score:0, combo:0, missCount:0, clearCount:0, timer:60, activeBlocks:[], interval:null, spawnTimer:null, vowelMisses:{a:0,i:0,u:0,e:0,o:0}, vowelTotal:{a:0,i:0,u:0,e:0,o:0}, startTime:0 };
+        let app3_config = { speed: 'normal', time: 60 };
+        const romanMap = {'ka':'か','ki':'き','ku':'く','ke':'け','ko':'こ','sa':'さ','si':'し','su':'す','se':'せ','so':'そ','ta':'た','ti':'ち','tu':'つ','te':'て','to':'と','na':'な','ni':'に','nu':'ぬ','ne':'ね','no':'の','ha':'は','hi':'ひ','hu':'ふ','he':'へ','ho':'ほ','ma':'ま','mi':'み','mu':'む','me':'め','mo':'も','ya':'や','yu':'ゆ','yo':'よ','ra':'ら','ri':'り','ru':'る','re':'れ','ro':'ろ','wa':'わ','wo':'を','a':'あ','i':'い','u':'う','e':'え','o':'お'};
+        const vowels = ['a','i','u','e','o'];
+
+        function setApp3Config(type, val, btn) {
+            app3_config[type] = val;
+            const selector = type === 'speed' ? '.r1-spd' : '.r1-time';
+            document.querySelectorAll(selector).forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+
+        function initApp3(mode) {
+            initAudio();
+            document.getElementById('roman1-start').style.display = 'none';
+            document.getElementById('r1-container').innerHTML = '<div class="judgment-zone"></div>'; // reset
+            app3_state = { isGameActive:true, mode:mode, score:0, combo:0, missCount:0, clearCount:0, timer:app3_config.time, activeBlocks:[], vowelMisses:{a:0,i:0,u:0,e:0,o:0}, vowelTotal:{a:0,i:0,u:0,e:0,o:0}, startTime:Date.now() };
+            
+            updateUIApp3();
+            if(mode === 'time') {
+                app3_state.interval = setInterval(() => {
+                    app3_state.timer--; document.getElementById('r1-timer').innerText = `のこり: ${app3_state.timer}`;
+                    if(app3_state.timer <= 0) endApp3();
+                }, 1000);
+            } else {
+                document.getElementById('r1-timer').innerText = `NO MISS!`;
+            }
+            app3Loop(); scheduleApp3Spawn();
+        }
+
+        function scheduleApp3Spawn() {
+            if(!app3_state.isGameActive) return;
+            spawnApp3();
+            let nextTime = 2000;
+            if(app3_config.speed !== 'slow') {
+                let base = app3_config.speed === 'fast' ? 1000 : 1500;
+                nextTime = Math.max(800, base - (app3_state.clearCount * 20));
+            }
+            app3_state.spawnTimer = setTimeout(scheduleApp3Spawn, nextTime);
+        }
+
+        function spawnApp3() {
+            const v = vowels[Math.floor(Math.random()*5)];
+            const el = document.createElement('div'); el.className = `block`; el.style.backgroundColor = `var(--color-${v})`;
+            el.innerHTML = `<div style="font-size:26px">${romanMap[v]}</div><div style="font-size:16px">${v.toUpperCase()}</div>`;
+            el.style.left = (Math.random() * 340 + 30) + 'px'; el.style.top = '-90px';
+            document.getElementById('r1-container').appendChild(el);
+            
+            app3_state.vowelTotal[v]++;
+            let spd = 1.2;
+            if(app3_config.speed !== 'slow') {
+                let base = app3_config.speed === 'fast' ? 3.2 : 2.0;
+                spd = base + (app3_state.clearCount * 0.05) + Math.random();
+            }
+            app3_state.activeBlocks.push({ el: el, v: v, y: -90, speed: spd });
+        }
+
+        function app3Loop() {
+            if(!app3_state.isGameActive) return;
+            for(let i=app3_state.activeBlocks.length-1; i>=0; i--) {
+                const b = app3_state.activeBlocks[i];
+                b.y += b.speed; b.el.style.top = b.y + 'px';
+                if(b.y > 400) {
+                    handleMissApp3(b.v);
+                    b.el.remove(); app3_state.activeBlocks.splice(i,1);
+                    if(app3_state.mode === 'nomiss') endApp3();
+                }
+            }
+            requestAnimationFrame(app3Loop);
+        }
+
+        function handleMissApp3(v) {
+            app3_state.missCount++; app3_state.combo = 0; app3_state.vowelMisses[v]++;
+            updateUIApp3(); showEffectApp3("MISS...", 350, "var(--danger)"); playSfx(150, 0.2, 'sawtooth');
+        }
+
+        function showEffectApp3(text, y, color) {
+            const eff = document.createElement('div'); eff.className = 'hit-effect'; eff.innerText = text;
+            eff.style.left = '50%'; eff.style.transform = 'translateX(-50%)'; eff.style.top = y + 'px'; eff.style.color = color;
+            document.getElementById('r1-container').appendChild(eff);
+            setTimeout(() => eff.remove(), 500);
+        }
+
+        function updateUIApp3() {
+            document.getElementById('r1-score').innerText = app3_state.score.toString().padStart(5, '0');
+            document.getElementById('r1-combo').innerText = app3_state.combo > 1 ? `${app3_state.combo} COMBO!` : "";
+        }
+
+        function endApp3() {
+            app3_state.isGameActive = false;
+            clearInterval(app3_state.interval); clearTimeout(app3_state.spawnTimer);
+            
+            const playTime = Math.floor((Date.now() - app3_state.startTime) / 1000);
+            const speedLabel = app3_config.speed === 'slow' ? 'ゆっくり' : app3_config.speed === 'fast' ? 'はやい' : 'ふつう';
+            const title = app3_state.mode === 'time' ? `${app3_config.time}びょう チャレンジ (${speedLabel})` : "のーみす チャレンジ けっか";
+
+            let html = `
+                <div class="stat-row"><span>スコア</span><b>${app3_state.score}</b></div>
+                <div class="stat-row"><span>クリア数</span><b>${app3_state.clearCount}もん</b></div>
+                ${app3_state.mode === 'nomiss' ? `<div class="stat-row"><span>タイム</span><b>${playTime}びょう</b></div>` : ""}
+                <h3 style="margin:20px 0 10px; font-size:16px; color:#2c3e50; text-align:left; border-left:5px solid var(--primary); padding-left:10px;">にがてな「ぼいん」をチェック！</h3>
+                <div id="app3-analysis"></div>
+            `;
+            showGlobalResult(title, html);
+
+            const analysis = document.getElementById('app3-analysis');
+            vowels.forEach(v => {
+                const miss = app3_state.vowelMisses[v];
+                const total = app3_state.vowelTotal[v] || 1;
+                const missRate = (miss / total) * 100;
+                analysis.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:bold;">
+                        <span>${v.toUpperCase()} (ミス: ${miss})</span>
+                        <span>${Math.round(100 - missRate)}% 成功</span>
+                    </div>
+                    <div class="v-bar-container">
+                        <div id="bar3-${v}" style="height:100%; width:0%; transition:width 1s ease-out; background:var(--color-${v});"></div>
+                    </div>
+                `;
+                setTimeout(() => { const bar = document.getElementById(`bar3-${v}`); if(bar) bar.style.width = (100 - missRate) + "%"; }, 100);
+            });
+        }
+
+        /**
+         * App 4: Romanji Consonants
+         */
+        let app4_state = { isGameActive:false, score:0, timer:60, combo:0, clearCount:0, missCount:0, activeBlocks:[], interval:null, spawnInterval:null, missMap:{}, stats:{} };
+        let app4_config = { speed: 1.5, time: 60 };
+        const romanData = {'': ['a','i','u','e','o'], 'k': ['a','i','u','e','o'], 's': ['a','i','u','e','o'], 't': ['a','i','u','e','o'], 'n': ['a','i','u','e','o'], 'h': ['a','i','u','e','o'], 'm': ['a','i','u','e','o'], 'y': ['a','u','o'], 'r': ['a','i','u','e','o'], 'w': ['a','o'] };
+
+        function setApp4Config(type, val, btn) {
+            app4_config[type] = val;
+            const selector = type === 'speed' ? '.r2-spd' : '.r2-time';
+            document.querySelectorAll(selector).forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+
+        function toggleR2Checks() {
+            const checks = document.querySelectorAll('#r2-rows-checks input');
+            const all = Array.from(checks).every(c => c.checked);
+            checks.forEach(c => c.checked = !all);
+        }
+
+        function initApp4() {
+            initAudio();
+            const rows = Array.from(document.querySelectorAll('#r2-rows-checks input:checked')).map(c => c.value);
+            if(rows.length===0) { alert("行をえらんでね！"); return; }
+            document.getElementById('roman2-start').style.display = 'none';
+            document.getElementById('r2-container').innerHTML = '<div class="judgment-zone"></div>'; // reset
+            app4_state = { isGameActive:true, score:0, timer:app4_config.time, combo:0, clearCount:0, missCount:0, activeBlocks:[], missMap:{}, stats:{}, rows: rows };
+            
+            updateUIApp4();
+            app4_state.interval = setInterval(() => {
+                app4_state.timer--; document.getElementById('r2-timer').innerText = `のこり: ${app4_state.timer}`;
+                if(app4_state.timer <= 0) endApp4();
+            }, 1000);
+            app4Loop(); 
+            app4_state.spawnInterval = setInterval(spawnApp4, 2200 / (app4_config.speed * 0.8));
+        }
+
+        function spawnApp4() {
+            if(!app4_state.isGameActive) return;
+            const c = app4_state.rows[Math.floor(Math.random()*app4_state.rows.length)];
+            const vList = romanData[c];
+            const v = vList[Math.floor(Math.random()*vList.length)];
+            const combo = c + v;
+            const el = document.createElement('div'); el.className = 'block';
+            el.style.backgroundColor = `var(--color-${v})`;
+            el.innerHTML = `<span style="font-size:26px">${romanMap[combo]}</span><span style="font-size:14px">${combo.toUpperCase()}</span>`;
+            el.style.left = (Math.random()*340 + 30) + 'px'; el.style.top = '-90px';
+            document.getElementById('r2-container').appendChild(el);
+            
+            app4_state.activeBlocks.push({ el: el, c: c, v: v, combo: combo, y: -90, speed: app4_config.speed, waitingVowel: (c==='') });
+            if(c !== '') updateStatApp4(c, 'total');
+            updateStatApp4(v, 'total');
+        }
+
+        function updateStatApp4(key, type) {
+            const k = key.toUpperCase() || 'A';
+            if(!app4_state.stats[k]) app4_state.stats[k] = { total: 0, success: 0 };
+            if(type === 'total') app4_state.stats[k].total++;
+            if(type === 'success') app4_state.stats[k].success++;
+        }
+
+        function app4Loop() {
+            if(!app4_state.isGameActive) return;
+            for(let i=app4_state.activeBlocks.length-1; i>=0; i--) {
+                const b = app4_state.activeBlocks[i];
+                b.y += b.speed; b.el.style.top = b.y + 'px';
+                if(b.y > 380) {
+                    handleMissApp4(b.waitingVowel ? b.v : b.c);
+                    b.el.remove(); app4_state.activeBlocks.splice(i,1); 
+                }
+            }
+            requestAnimationFrame(app4Loop);
+        }
+
+        function handleMissApp4(char) {
+            app4_state.missCount++; app4_state.combo = 0;
+            const k = char.toUpperCase() || 'A';
+            app4_state.missMap[k] = (app4_state.missMap[k] || 0) + 1;
+            updateUIApp4(); showEffectApp4("おしい！", 330, "var(--danger)"); playSfx(150, 0.2, 'sawtooth');
+        }
+
+        function showEffectApp4(text, y, color) {
+            const eff = document.createElement('div'); eff.className = 'hit-effect'; eff.innerText = text;
+            eff.style.left = '50%'; eff.style.transform = 'translateX(-50%)'; eff.style.top = y + 'px'; eff.style.color = color;
+            document.getElementById('r2-container').appendChild(eff);
+            setTimeout(() => eff.remove(), 500);
+        }
+
+        function updateUIApp4() {
+            document.getElementById('r2-score').innerText = Math.floor(app4_state.score).toString().padStart(5,'0');
+            document.getElementById('r2-combo').innerText = app4_state.combo > 1 ? `${app4_state.combo} つづいたよ！` : "";
+        }
+
+        function endApp4() {
+            app4_state.isGameActive = false;
+            clearInterval(app4_state.interval); clearInterval(app4_state.spawnInterval);
+            
+            let html = `
+                <div class="stat-row"><span>てんすう：</span><strong>${Math.floor(app4_state.score)}</strong></div>
+                <div class="stat-row"><span>あてた かず：</span><strong>${app4_state.clearCount} こ</strong></div>
+                <div class="stat-row"><span>まちがい：</span><strong style="color:var(--danger)">${app4_state.missCount} かい</strong></div>
+
+                <div style="font-weight:bold; color:#2c3e50; border-left:5px solid var(--primary); padding-left:10px; margin:15px 0 10px; text-align:left;">あ・い・う・え・お の とくいど</div>
+                <div id="vowel-stats" class="stat-grid"></div>
+
+                <div style="font-weight:bold; color:#2c3e50; border-left:5px solid var(--primary); padding-left:10px; margin:15px 0 10px; text-align:left;">ほかの おとの とくいど</div>
+                <div id="consonant-stats" class="stat-grid"></div>
+                
+                <div style="margin-top:15px; text-align:left;">
+                    <label style="font-weight:bold; color:#e17055;">まちがえた キー：</label>
+                    <div id="miss-list" style="margin-top:5px;"></div>
+                </div>
+                <div id="feedback-text" style="background:#fdf2f2; padding:15px; margin:15px 0; border-radius:10px; font-weight:bold; font-size:14px; line-height:1.5; color:#2c3e50;"></div>
+            `;
+            showGlobalResult("しんだん けっか", html);
+
+            const vArea = document.getElementById('vowel-stats');
+            const cArea = document.getElementById('consonant-stats');
+            ['A','I','U','E','O'].forEach(v => renderStatBox(v, vArea));
+            ['K','S','T','N','H','M','Y','R','W'].forEach(c => {
+                if(app4_state.rows.some(r => r.toUpperCase()===c)) renderStatBox(c, cArea);
+            });
+
+            const missList = document.getElementById('miss-list');
+            const sortedMisses = Object.entries(app4_state.missMap).sort((a,b)=>b[1]-a[1]);
+            
+            if(sortedMisses.length === 0) {
+                missList.innerHTML = "なし！はなまるです！??";
+                document.getElementById('feedback-text').innerText = "ぜんぶ せいかい！ すごすぎます！ はなまる 100点（てん）です！ つぎは もっと はやく してみる？";
+            } else {
+                sortedMisses.forEach(([char, count]) => {
+                    const span = document.createElement('span'); span.className = 'miss-tag';
+                    span.innerText = `${char} (${count})`; missList.appendChild(span);
+                });
+                const worstKey = sortedMisses[0][0];
+                document.getElementById('feedback-text').innerText = `「${worstKey}」が すこし むずかしかったかな？ きーぼーどの いろを みて、つぎも がんばろう！ 手（て）を リラックスさせてね。`;
+            }
+        }
+
+        function renderStatBox(key, container) {
+            const data = app4_state.stats[key] || { total: 0, success: 0 };
+            const percent = data.total > 0 ? Math.round((data.success / data.total) * 100) : 0;
+            const box = document.createElement('div'); box.className = 'stat-box';
+            box.innerHTML = `<span style="font-size:12px; color:#7f8c8d; display:block;">${key}</span><span style="font-size:16px; font-weight:bold; display:block;">${percent}%</span>
+                <div class="stat-bar-bg"><div class="stat-bar-fill" style="width: 0%;"></div></div>`;
+            container.appendChild(box);
+            setTimeout(() => {
+                const fill = box.querySelector('.stat-bar-fill'); fill.style.width = percent + '%';
+                if(percent < 70) fill.style.background = 'var(--danger)'; else if(percent < 90) fill.style.background = 'var(--warning)'; else fill.style.background = 'var(--success)';
+            }, 100);
+        }
+
+        /**
+         * 共通キーボード＆イベント
+         */
+        function setupKeyboard(id) {
+            const area = document.getElementById(id); area.innerHTML = "";
+            kbdRows.forEach(row => {
+                const rdiv = document.createElement('div'); rdiv.className = 'key-row';
+                row.forEach(k => {
+                    const char = k.toLowerCase();
+                    const fingerClass = alphaData[k] ? `f-${alphaData[k].finger}` : '';
+                    const div = document.createElement('div'); div.className = `key ${fingerClass}`;
+                    div.id = `${id}-${char}`; div.innerText = k;
+                    rdiv.appendChild(div);
+                });
+                area.appendChild(rdiv);
+            });
+        }
+
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            
+            // App 3
+            if(app3_state.isGameActive) {
+                const kEl = document.getElementById(`r1-keyboard-${key}`);
+                if(kEl) { kEl.classList.add('pressed'); setTimeout(()=>kEl.classList.remove('pressed'), 100); }
+                if(vowels.includes(key)) {
+                    const hitIdx = app3_state.activeBlocks.findIndex(b => b.v === key && b.y > 270 && b.y < 380);
+                    if(hitIdx !== -1) {
+                        const b = app3_state.activeBlocks[hitIdx];
+                        let pts = 100; let msg = "GOOD";
+                        if(b.y > 300 && b.y < 350) { pts = 200; msg = "PERFECT!!"; }
+                        app3_state.combo++; app3_state.score += pts + (app3_state.combo * 10); app3_state.clearCount++;
+                        showEffectApp3(msg, b.y, "var(--success)"); playSfx(659, 0.1);
+                        b.el.remove(); app3_state.activeBlocks.splice(hitIdx, 1);
+                    } else {
+                        handleMissApp3(key);
+                        if(app3_state.mode === 'nomiss') endApp3();
+                    }
+                    updateUIApp3();
+                }
+            }
+
+            // App 4
+            if(app4_state.isGameActive) {
+                const kEl = document.getElementById(`r2-keyboard-${key}`);
+                if(kEl) { kEl.classList.add('pressed'); setTimeout(()=>kEl.classList.remove('pressed'), 100); }
+                const hitIdx = app4_state.activeBlocks.findIndex(b => b.y > 150 && b.y < 380);
+                if(hitIdx === -1) return;
+                const target = app4_state.activeBlocks[hitIdx];
+                if(!target.waitingVowel) {
+                    if(key === target.c) {
+                        updateStatApp4(target.c, 'success'); target.waitingVowel = true; target.el.classList.add('waiting-vowel');
+                        showEffectApp4("OK!", target.y, "var(--primary)"); playSfx(523, 0.1);
+                    } else if(key.length === 1) { handleMissApp4(target.c); }
+                } else {
+                    if(key === target.v) {
+                        updateStatApp4(target.v, 'success'); app4_state.combo++;
+                        let pts = 100; let msg = "いいかんじ！";
+                        if(target.y > 280 && target.y < 350) { pts = 200; msg = "すごい！"; }
+                        app4_state.score += (pts + (app4_state.combo * 10)) * app4_config.speed; app4_state.clearCount++;
+                        showEffectApp4(msg, target.y, "var(--success)"); playSfx(659, 0.1);
+                        target.el.remove(); app4_state.activeBlocks.splice(hitIdx, 1); updateUIApp4();
+                    } else if(key.length === 1) { handleMissApp4(target.v); }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
