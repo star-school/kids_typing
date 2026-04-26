@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ローマじ・ますたー Pro</title>
+    <style>
+        :root {
+            --color-a: #ff5e57; --color-i: #48c1fb; --color-u: #feb72b;
+            --color-e: #2ed573; --color-o: #a55eea;
+            --bg-color: #f8f9fa;
+            --f-pinky: #ff6b81; --f-ring: #2ed573; --f-middle: #54a0ff; --f-index: #ff9f43;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --primary: #3498db;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+        }
+
+        body { 
+            background: var(--bg-color); 
+            font-family: 'Hiragino Kaku Gothic Pro', 'ヒラギノ角ゴ Pro W3', 'Meiryo', sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            min-height: 100vh; margin: 0; overflow: hidden; color: #2c3e50;
+        }
+        
+        .screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 800px; animation: fadeIn 0.3s ease-out; }
+        .active { display: flex; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1 { font-size: clamp(32px, 8vw, 48px); color: #2c3e50; text-shadow: 2px 2px 0px #fff; margin-bottom: 15px; }
+        
+        /* せっていカード */
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: var(--shadow); width: 500px; max-width: 95%; text-align: left; }
+        .item { margin-bottom: 15px; }
+        .item label { display: block; font-weight: bold; margin-bottom: 8px; color: #34495e; font-size: 16px; }
+        
+        .check-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #ddd; }
+        .check-item { display: flex; align-items: center; font-size: 14px; cursor: pointer; }
+        .check-item input { margin-right: 5px; cursor: pointer; width: 18px; height: 18px; }
+
+        .btn-group { display: flex; gap: 8px; }
+        .opt-btn { background: #eee; border: 2px solid #ccc; flex: 1; padding: 10px; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .opt-btn.selected { background: var(--primary); color: white; border-color: #2980b9; box-shadow: 0 4px 0 #2980b9; transform: translateY(-2px); }
+
+        .btn-start { background: var(--success); color: white; font-size: 24px; font-weight: bold; border: none; width: 100%; padding: 15px; border-radius: 50px; cursor: pointer; margin-top: 10px; box-shadow: 0 5px 0 #27ae60; }
+        .btn-start:active { transform: translateY(3px); box-shadow: none; }
+
+        /* げーむのがめん */
+        #game-container { 
+            position: relative; width: 450px; height: 380px; 
+            background: #fff; border: 6px solid #333; border-radius: 20px; 
+            overflow: hidden; box-shadow: var(--shadow);
+        }
+
+        #judgment-zone { 
+            position: absolute; bottom: 30px; width: 100%; height: 70px; 
+            background: rgba(46, 213, 115, 0.1); border-top: 3px dashed #2ecc71; 
+            border-bottom: 3px dashed #2ecc71; z-index: 1; 
+        }
+
+        .block { 
+            position: absolute; width: 75px; height: 85px; border-radius: 12px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            font-weight: bold; color: white; z-index: 2; transition: transform 0.1s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .block.waiting-vowel { border: 4px solid #fff; box-shadow: 0 0 15px rgba(255,255,255,0.8); transform: scale(1.1); }
+
+        .hit-effect {
+            position: absolute; font-size: 24px; font-weight: bold; color: #2ecc71;
+            pointer-events: none; animation: floatUp 0.5s forwards; z-index: 10;
+        }
+        @keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-40px); } }
+
+        /* きーぼーど */
+        #keyboard-area { margin-top: 15px; background: #dfe4ea; padding: 10px; border-radius: 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .key-row { display: flex; justify-content: center; margin-bottom: 4px; }
+        .key { 
+            width: 36px; height: 42px; background: #fff; border-radius: 8px; margin: 2px; 
+            display: flex; align-items: center; justify-content: center; font-size: 13px; 
+            font-weight: bold; border-bottom: 3px solid #bdc3c7; transition: all 0.05s;
+        }
+        .f-pinky { border-top: 3px solid var(--f-pinky); } 
+        .f-ring { border-top: 3px solid var(--f-ring); } 
+        .f-middle { border-top: 3px solid var(--f-middle); } 
+        .f-index { border-top: 3px solid var(--f-index); }
+        
+        .pressed { transform: translateY(2px); border-bottom-width: 1px; background: #95a5a6 !important; color: white; }
+
+        #ui-layer { width: 450px; display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 20px; font-weight: bold; }
+        #combo-display { color: #e67e22; font-size: 24px; text-shadow: 1px 1px 0 white; min-height: 1.5em; text-align: center; width: 100%; }
+        #timer-display { color: #e74c3c; }
+
+        /* けっかがめん */
+        .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 18px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 15px; }
+        .stat-box { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 5px; text-align: center; }
+        .stat-label { font-size: 12px; color: #7f8c8d; display: block; }
+        .stat-value { font-size: 16px; font-weight: bold; display: block; }
+        .stat-bar-bg { height: 4px; background: #ddd; border-radius: 2px; margin-top: 4px; overflow: hidden; }
+        .stat-bar-fill { height: 100%; background: var(--success); transition: width 1s ease-out; }
+        .miss-tag { display: inline-block; background: #ff7675; color: white; padding: 4px 10px; border-radius: 6px; margin: 3px; font-size: 14px; }
+        .analysis-title { font-weight: bold; color: #2c3e50; border-left: 5px solid var(--primary); padding-left: 10px; margin: 15px 0 10px 0; text-align: left; }
+    </style>
+</head>
+<body>
+
+    <!-- タイトルがめん -->
+    <div id="title-screen" class="screen active">
+        <h1>ローマじ・ますたー</h1>
+        <div class="card">
+            <div class="item">
+                <label>1. れんしゅうする「ぎょう」を えらぼう</label>
+                <div class="check-grid" id="consonant-options">
+                    <label class="check-item"><input type="checkbox" value="" checked> あ行</label>
+                    <label class="check-item"><input type="checkbox" value="k" checked> か行</label>
+                    <label class="check-item"><input type="checkbox" value="s" checked> さ行</label>
+                    <label class="check-item"><input type="checkbox" value="t" checked> た行</label>
+                    <label class="check-item"><input type="checkbox" value="n"> な行</label>
+                    <label class="check-item"><input type="checkbox" value="h"> は行</label>
+                    <label class="check-item"><input type="checkbox" value="m"> ま行</label>
+                    <label class="check-item"><input type="checkbox" value="y"> や行</label>
+                    <label class="check-item"><input type="checkbox" value="r"> ら行</label>
+                    <label class="check-item"><input type="checkbox" value="w"> わ行</label>
+                </div>
+                <button style="margin-top:5px; font-size:12px; padding:5px; cursor:pointer;" onclick="toggleAllCheckboxes()">ぜんぶ えらぶ / はずす</button>
+            </div>
+
+            <div class="item">
+                <label>2. はやさを えらぼう</label>
+                <div class="btn-group">
+                    <button class="opt-btn speed-opt" onclick="setConfig('speed', 0.8, this)">ゆっくり</button>
+                    <button class="opt-btn speed-opt selected" onclick="setConfig('speed', 1.5, this)">ふつう</button>
+                    <button class="opt-btn speed-opt" onclick="setConfig('speed', 2.5, this)">はやい</button>
+                </div>
+            </div>
+
+            <div class="item">
+                <label>3. あそぶ じかん</label>
+                <div class="btn-group">
+                    <button class="opt-btn time-opt" onclick="setConfig('time', 30, this)">30びょう</button>
+                    <button class="opt-btn time-opt selected" onclick="setConfig('time', 60, this)">60びょう</button>
+                    <button class="opt-btn time-opt" onclick="setConfig('time', 90, this)">90びょう</button>
+                </div>
+            </div>
+
+            <button class="btn-start" onclick="startGame()">しゅっぱつ！</button>
+        </div>
+    </div>
+
+    <!-- げーむがめん -->
+    <div id="game-screen" class="screen">
+        <div id="ui-layer">
+            <div id="timer-display">のこり: 60</div>
+            <div id="score-display">00000</div>
+        </div>
+        <div id="combo-display"></div>
+        <div id="game-container">
+            <div id="judgment-zone"></div>
+        </div>
+        <div id="keyboard-area"></div>
+    </div>
+
+    <!-- けっかがめん -->
+    <div id="result-screen" class="screen">
+        <div class="card" style="text-align:center; max-height: 90vh; overflow-y: auto;">
+            <h2 style="margin-top:0; color: #2c3e50;">しんだん けっか</h2>
+            
+            <div class="stat-row"><span>てんすう：</span><strong id="res-score">0</strong></div>
+            <div class="stat-row"><span>あてた かず：</span><strong id="res-chars">0</strong></div>
+            <div class="stat-row"><span>まちがい：</span><strong id="res-misses" style="color:var(--danger)">0</strong></div>
+
+            <div class="analysis-title">あ・い・う・え・お の とくいど</div>
+            <div id="vowel-stats" class="stat-grid"></div>
+
+            <div class="analysis-title">ほかの おとの とくいど</div>
+            <div id="consonant-stats" class="stat-grid"></div>
+            
+            <div style="margin-top:15px; text-align:left;">
+                <label style="font-weight:bold; color:#e17055;">まちがえた キー：</label>
+                <div id="miss-list" style="margin-top:5px;"></div>
+            </div>
+
+            <div id="feedback-text" style="background:#fdf2f2; padding:15px; margin:15px 0; border-radius:10px; font-weight:bold; font-size:14px; line-height:1.5;"></div>
+            
+            <button class="btn-start" style="background:#34495e; box-shadow: 0 5px 0 #2c3e50;" onclick="location.reload()">タイトルに もどる</button>
+        </div>
+    </div>
+
+<script>
+const romanData = {
+    '': ['a','i','u','e','o'], 'k': ['a','i','u','e','o'], 's': ['a','i','u','e','o'],
+    't': ['a','i','u','e','o'], 'n': ['a','i','u','e','o'], 'h': ['a','i','u','e','o'],
+    'm': ['a','i','u','e','o'], 'y': ['a','u','o'], 'r': ['a','i','u','e','o'], 'w': ['a','o']
+};
+const jpMap = {
+    'a':'あ','i':'い','u':'う','e':'え','o':'お','ka':'か','ki':'き','ku':'く','ke':'け','ko':'こ','sa':'さ','si':'し','su':'す','se':'せ','so':'そ','ta':'た','ti':'ち','tu':'つ','te':'て','to':'と','na':'な','ni':'に','nu':'ぬ','ne':'ね','no':'の','ha':'は','hi':'ひ','hu':'ふ','he':'へ','ho':'ほ','ma':'ま','mi':'み','mu':'む','me':'め','mo':'も','ya':'や','yu':'ゆ','yo':'よ','ra':'ら','ri':'り','ru':'る','re':'れ','ro':'ろ','wa':'わ','wo':'を'
+};
+const fingerMap = {
+    'q':'f-pinky','a':'f-pinky','z':'f-pinky','w':'f-ring','s':'f-ring','x':'f-ring','e':'f-middle','d':'f-middle','c':'f-middle','r':'f-index','t':'f-index','f':'f-index','g':'f-index','v':'f-index','b':'f-index','y':'f-index','u':'f-index','h':'f-index','j':'f-index','n':'f-index','m':'f-index','i':'f-middle','k':'f-middle','o':'f-ring','l':'f-ring','p':'f-pinky'
+};
+const kbLayout = [["Q","W","E","R","T","Y","U","I","O","P"],["A","S","D","F","G","H","J","K","L"],["Z","X","C","V","B","N","M"]];
+
+let config = { speed: 1.5, time: 60, selectedRows: [] };
+let state = { 
+    score:0, timer:0, combo:0, clearCount:0, missCount:0, 
+    activeBlocks:[], interval:null, spawnInterval:null,
+    missMap:{}, stats: {}
+};
+
+// きーぼーどをつくる
+const kbArea = document.getElementById('keyboard-area');
+kbLayout.forEach(row => {
+    const rowDiv = document.createElement('div'); rowDiv.className = 'key-row';
+    row.forEach(k => {
+        const char = k.toLowerCase();
+        const div = document.createElement('div');
+        div.className = `key ${fingerMap[char] || ''}`;
+        div.id = `key-${char}`;
+        div.innerText = k;
+        rowDiv.appendChild(div);
+    });
+    kbArea.appendChild(rowDiv);
+});
+
+function setConfig(type, val, btn) {
+    config[type] = val;
+    const selector = type === 'speed' ? '.speed-opt' : '.time-opt';
+    document.querySelectorAll(selector).forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+}
+
+function toggleAllCheckboxes() {
+    const checks = document.querySelectorAll('#consonant-options input');
+    const allChecked = Array.from(checks).every(c => c.checked);
+    checks.forEach(c => c.checked = !allChecked);
+}
+
+function startGame() {
+    config.selectedRows = Array.from(document.querySelectorAll('#consonant-options input:checked')).map(c => c.value);
+    if(config.selectedRows.length === 0) { alert('れんしゅうする ぎょうを えらんでね！'); return; }
+
+    state = { 
+        score:0, timer:config.time, combo:0, clearCount:0, missCount:0,
+        activeBlocks:[], interval:null, spawnInterval:null,
+        missMap:{}, stats: {} 
+    };
+    
+    switchScreen('game-screen');
+    updateUI();
+
+    state.interval = setInterval(() => {
+        state.timer--;
+        document.getElementById('timer-display').innerText = `のこり: ${state.timer}`;
+        if(state.timer <= 0) endLevel();
+    }, 1000);
+    
+    gameLoop();
+    state.spawnInterval = setInterval(createBlock, 2200 / (config.speed * 0.8));
+}
+
+function createBlock() {
+    const c = config.selectedRows[Math.floor(Math.random() * config.selectedRows.length)];
+    const vList = romanData[c];
+    const v = vList[Math.floor(Math.random() * vList.length)];
+    const comboText = c + v;
+
+    const el = document.createElement('div');
+    el.className = `block`;
+    el.style.backgroundColor = {a:'#ff5e57', i:'#48c1fb', u:'#feb72b', e:'#2ed573', o:'#a55eea'}[v];
+    el.innerHTML = `<span style="font-size:26px">${jpMap[comboText]}</span><span style="font-size:14px">${comboText.toUpperCase()}</span>`;
+    el.style.left = (Math.random() * 340 + 30) + 'px'; 
+    el.style.top = '-90px';
+    document.getElementById('game-container').appendChild(el);
+    
+    state.activeBlocks.push({
+        el: el, c: c, v: v, combo: comboText, y: -90, 
+        speed: config.speed, waitingVowel: (c === '')
+    });
+
+    if (c !== '') updateStat(c, 'total');
+    updateStat(v, 'total');
+}
+
+function updateStat(key, type) {
+    const k = key.toUpperCase() || 'A';
+    if (!state.stats[k]) state.stats[k] = { total: 0, success: 0 };
+    if (type === 'total') state.stats[k].total++;
+    if (type === 'success') state.stats[k].success++;
+}
+
+function gameLoop() {
+    if(!document.getElementById('game-screen').classList.contains('active')) return;
+    for(let i=state.activeBlocks.length-1; i>=0; i--) {
+        const b = state.activeBlocks[i];
+        b.y += b.speed; b.el.style.top = b.y + 'px';
+        if(b.y > 380) {
+            handleMiss(b.waitingVowel ? b.v : b.c);
+            removeBlock(i);
+        }
+    }
+    requestAnimationFrame(gameLoop);
+}
+
+function handleMiss(char) {
+    state.missCount++;
+    state.combo = 0;
+    const k = char.toUpperCase() || 'A';
+    state.missMap[k] = (state.missMap[k] || 0) + 1;
+    updateUI();
+    showEffect("おしい！", 330, "#e74c3c");
+}
+
+function showEffect(text, y, color) {
+    const eff = document.createElement('div');
+    eff.className = 'hit-effect';
+    eff.innerText = text;
+    eff.style.left = '50%';
+    eff.style.top = y + 'px';
+    eff.style.color = color;
+    document.getElementById('game-container').appendChild(eff);
+    setTimeout(() => eff.remove(), 500);
+}
+
+window.addEventListener('keydown', (e) => {
+    if(!document.getElementById('game-screen').classList.contains('active')) return;
+    const key = e.key.toLowerCase();
+    
+    const keyEl = document.getElementById(`key-${key}`);
+    if(keyEl) {
+        keyEl.classList.add('pressed');
+        setTimeout(() => keyEl.classList.remove('pressed'), 80);
+    }
+
+    const hitIdx = state.activeBlocks.findIndex(b => b.y > 150 && b.y < 380);
+    if(hitIdx === -1) return;
+    
+    const target = state.activeBlocks[hitIdx];
+    
+    if(!target.waitingVowel) {
+        if(key === target.c) { 
+            updateStat(target.c, 'success');
+            target.waitingVowel = true; 
+            target.el.classList.add('waiting-vowel'); 
+            showEffect("OK!", target.y, "#3498db");
+        } else if(key.length === 1) { 
+            handleMiss(target.c); 
+        }
+    } else {
+        if(key === target.v) {
+            updateStat(target.v, 'success');
+            state.combo++;
+            let points = 100;
+            let msg = "いいかんじ！";
+            if(target.y > 280 && target.y < 350) { points = 200; msg = "すごい！"; }
+            
+            state.score += (points + (state.combo * 10)) * config.speed;
+            state.clearCount++;
+            showEffect(msg, target.y, "#2ecc71");
+            removeBlock(hitIdx);
+            updateUI();
+        } else if(key.length === 1) { 
+            handleMiss(target.v); 
+        }
+    }
+});
+
+function updateUI() {
+    document.getElementById('score-display').innerText = Math.floor(state.score).toString().padStart(5, '0');
+    const comboEl = document.getElementById('combo-display');
+    comboEl.innerText = state.combo > 1 ? `${state.combo} つづいたよ！` : "";
+}
+
+function removeBlock(index) {
+    const b = state.activeBlocks[index];
+    if(b.el.parentNode) b.el.parentNode.removeChild(b.el);
+    state.activeBlocks.splice(index, 1);
+}
+
+function endLevel() {
+    clearInterval(state.interval); 
+    clearInterval(state.spawnInterval);
+    showResult();
+}
+
+function showResult() {
+    switchScreen('result-screen');
+    document.getElementById('res-chars').innerText = `${state.clearCount} こ`;
+    document.getElementById('res-score').innerText = Math.floor(state.score);
+    document.getElementById('res-misses').innerText = `${state.missCount} かい`;
+    
+    const vowelArea = document.getElementById('vowel-stats');
+    const consonantArea = document.getElementById('consonant-stats');
+    vowelArea.innerHTML = ""; consonantArea.innerHTML = "";
+
+    const vowels = ['A', 'I', 'U', 'E', 'O'];
+    const consonants = ['K', 'S', 'T', 'N', 'H', 'M', 'Y', 'R', 'W'];
+
+    vowels.forEach(v => renderStatBox(v, vowelArea));
+    consonants.forEach(c => {
+        if (config.selectedRows.some(row => row.toUpperCase() === c)) renderStatBox(c, consonantArea);
+    });
+
+    const missList = document.getElementById('miss-list');
+    missList.innerHTML = "";
+    const sortedMisses = Object.entries(state.missMap).sort((a,b) => b[1] - a[1]);
+    
+    if(sortedMisses.length === 0) {
+        missList.innerHTML = "なし！はなまるです！??";
+        document.getElementById('feedback-text').innerText = "ぜんぶ せいかい！ すごすぎます！ はなまる 100点（てん）です！ つぎは もっと はやく してみる？";
+    } else {
+        sortedMisses.forEach(([char, count]) => {
+            const span = document.createElement('span'); span.className = 'miss-tag';
+            span.innerText = `${char} (${count})`; missList.appendChild(span);
+        });
+        const worstKey = sortedMisses[0][0];
+        document.getElementById('feedback-text').innerText = `「${worstKey}」が すこし むずかしかったかな？ きーぼーどの いろを みて、つぎも がんばろう！ 手（て）を リラックスさせてね。`;
+    }
+}
+
+function renderStatBox(key, container) {
+    const data = state.stats[key] || { total: 0, success: 0 };
+    const percent = data.total > 0 ? Math.round((data.success / data.total) * 100) : 0;
+    const box = document.createElement('div');
+    box.className = 'stat-box';
+    box.innerHTML = `<span class="stat-label">${key}</span><span class="stat-value">${percent}%</span>
+        <div class="stat-bar-bg"><div class="stat-bar-fill" style="width: 0%;"></div></div>`;
+    container.appendChild(box);
+    setTimeout(() => {
+        const fill = box.querySelector('.stat-bar-fill');
+        fill.style.width = percent + '%';
+        if (percent < 70) fill.style.background = 'var(--danger)';
+        else if (percent < 90) fill.style.background = 'var(--color-u)';
+    }, 100);
+}
+
+function switchScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+</script>
+</body>
+</html>

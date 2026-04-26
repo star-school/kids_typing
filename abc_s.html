@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アルファベットクエスト</title>
+    <style>
+        :root {
+            --primary: #3498db; --success: #2ecc71; --gold: #f1c40f; --miss: #e74c3c; --bg: #f8fbff;
+            /* 指使いカラー */
+            --f-pinky: #ff5e57;  /* 赤 */
+            --f-ring: #2ed573;   /* 緑 */
+            --f-middle: #48c1fb; /* 青 */
+            --f-index: #feb72b;  /* オレンジ */
+            --f-vowel-o: #a55eea; /* 紫（O用） */
+        }
+        body { 
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif; 
+            background: var(--bg); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            padding-bottom: 100px; /* ボタン用の余白 */
+            overflow-x: hidden; 
+        }
+        
+        /* タイトル・結果画面 */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.98); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; }
+        .main-title { font-size: 42px; color: var(--primary); margin-bottom: 5px; font-weight: bold; }
+        .sub-title { font-size: 20px; color: #7f8c8d; margin-bottom: 30px; }
+        
+        /* 設定エリア */
+        .settings-area { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; width: 320px; }
+        .toggle-btn { padding: 12px 15px; font-size: 15px; border: 2px solid var(--primary); border-radius: 12px; background: white; color: var(--primary); cursor: pointer; transition: 0.2s; font-weight: bold; }
+        .toggle-btn.off { border-color: #95a5a6; color: #95a5a6; }
+
+        /* コレクションマップ */
+        .collection-container { 
+            margin-top: 15px; padding: 20px; background: #d1d8e0; border-radius: 20px; 
+            width: 95%; max-width: 800px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.1); 
+            text-align: center; transition: all 0.3s ease;
+        }
+        /* 非表示時のコンテナスタイル */
+        .collection-container.map-hidden { padding: 10px 20px; background: #e2e8f0; }
+        .collection-container.map-hidden .collection-grid { display: none; }
+
+        .collection-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .collection-container.map-hidden .collection-header { margin-bottom: 0; }
+
+        .layout-switch-btn { padding: 6px 12px; font-size: 12px; background: white; border: 1px solid #ccc; border-radius: 20px; cursor: pointer; font-weight: bold; color: #666; margin-left: 4px; }
+        .layout-switch-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .collection-grid { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .kbd-row { display: flex; gap: 6px; justify-content: center; width: 100%; }
+
+        /* キーのスロットスタイル */
+        .char-slot { 
+            width: 45px; height: 55px; background: white; border: 3px solid #ccc; border-radius: 8px;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; color: #333; font-size: 18px; transition: all 0.3s;
+        }
+
+        .border-pinky  { border-color: var(--f-pinky); }
+        .border-ring   { border-color: var(--f-ring); }
+        .border-middle { border-color: var(--f-middle); }
+        .border-index  { border-color: var(--f-index); }
+
+        .char-slot.active.fill-a { background: var(--f-pinky) !important; color: white; }
+        .char-slot.active.fill-e { background: var(--f-ring) !important; color: white; }
+        .char-slot.active.fill-u { background: var(--f-index) !important; color: white; }
+        .char-slot.active.fill-i { background: var(--f-middle) !important; color: white; }
+        .char-slot.active.fill-o { background: var(--f-vowel-o) !important; color: white; }
+        
+        .char-slot.active:not([class*="fill-"]) { background: var(--gold); color: white; border-color: #f39c12; transform: scale(1.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+
+        #status-msg { font-size: 18px; font-weight: bold; color: #7f8c8d; height: 24px; margin: 15px 0; }
+
+        /* ゲームボード */
+        .game-board { display: flex; justify-content: center; gap: 40px; padding: 25px; background: white; border-radius: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); width: 90%; max-width: 550px; }
+        .column { display: flex; flex-direction: column; gap: 12px; }
+        .draggable { 
+            width: 85px; height: 95px; background: var(--primary); color: white; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            border-radius: 12px; cursor: grab; box-shadow: 0 5px 0 #2980b9; 
+        }
+        .draggable:active { transform: translateY(4px); box-shadow: none; }
+        .main-char { font-size: 40px; font-weight: bold; line-height: 1; }
+        .reading-char { font-size: 14px; margin-top: 4px; font-weight: normal; opacity: 0.9; }
+
+        .dropzone { width: 100px; height: 90px; border: 2px dashed #cbd5e0; display: flex; justify-content: center; align-items: center; font-size: 46px; font-weight: bold; color: #cbd5e0; border-radius: 15px; }
+        .dropzone.success { border-style: solid; border-color: var(--success); color: var(--success); background: #eafaf1; animation: pop 0.3s; }
+
+        @keyframes pop { 50% { transform: scale(1.2); } }
+        
+        .btn { padding: 15px 40px; font-size: 20px; cursor: pointer; border-radius: 50px; border: none; background: var(--primary); color: white; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: 0.3s; }
+        .btn:hover { transform: scale(1.05); }
+
+        /* つぎのステージへボタン（強化版） */
+        #nextBtn { 
+            position: fixed; 
+            bottom: 30px; 
+            left: 50%; 
+            transform: translateX(-50%) translateY(100px); 
+            z-index: 500; 
+            background: linear-gradient(135deg, var(--gold), #f39c12); 
+            box-shadow: 0 10px 25px rgba(243, 156, 18, 0.4); 
+            font-size: 24px;
+            padding: 20px 60px;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #nextBtn.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .stats-card { background: #fff; padding: 20px; border-radius: 20px; border: 2px solid #eee; margin: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); width: 85%; max-width: 400px; }
+        .stat-detail { text-align: left; font-size: 16px; color: #555; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen" class="overlay">
+        <div class="main-title">アルファベットクエスト</div>
+        <div class="sub-title">おおもじ・こもじをあわせよう</div>
+        <div class="settings-area">
+            <button id="soundMasterBtn" class="toggle-btn" onclick="toggleSoundMaster()">[ 音・こえ: ON ]</button>
+            <button id="voiceModeBtn" class="toggle-btn" onclick="toggleVoiceMode()">[ こえの しゅるい: 日本語よみ ]</button>
+        </div>
+        <button class="btn" onclick="initGame()">ぼうけん を はじめる</button>
+    </div>
+
+    <div class="collection-container" id="collectionContainer">
+        <div class="collection-header">
+            <div style="font-size: 12px; color: #666; font-weight: bold;">PROGRESS MAP</div>
+            <div id="layoutControls">
+                <button id="layoutHideBtn" class="layout-switch-btn" onclick="switchMapLayout('hide')">非表示</button>
+                <button id="layoutAbcBtn" class="layout-switch-btn active" onclick="switchMapLayout('abc')">ABC順</button>
+                <button id="layoutKbdBtn" class="layout-switch-btn" onclick="switchMapLayout('keyboard')">キーボード</button>
+            </div>
+        </div>
+        <div class="collection-grid" id="collectionGrid"></div>
+    </div>
+
+    <div id="status-msg">おおもじ を はこぼう！</div>
+
+    <div class="game-board">
+        <div class="column" id="sources"></div>
+        <div class="column" id="targets"></div>
+    </div>
+
+    <!-- 常に押しやすい場所に表示されるボタン -->
+    <button class="btn" id="nextBtn" onclick="startRound()">つぎの ステージへ！ ?</button>
+
+    <div id="result-screen" class="overlay" style="display:none;">
+        <div id="result-content"></div>
+        <button class="btn" onclick="location.reload()">もういちど あそぶ</button>
+    </div>
+
+    <script>
+        const charData = {
+            'A': {read:'えー', type:'trans', finger:'pinky', fill:'fill-a'}, 'B': {read:'びー', type:'trans', finger:'index'}, 'C': {read:'しー', type:'parent', finger:'middle'},
+            'D': {read:'でー', type:'trans', finger:'middle'}, 'E': {read:'いー', type:'trans', finger:'ring', fill:'fill-e'}, 'F': {read:'えふ', type:'trans', finger:'index'},
+            'G': {read:'じー', type:'trans', finger:'index'}, 'H': {read:'えいち', type:'trans', finger:'index'}, 'I': {read:'あい', type:'trans', finger:'middle', fill:'fill-i'},
+            'J': {read:'じぇー', type:'parent', finger:'index'}, 'K': {read:'けー', type:'parent', finger:'middle'}, 'L': {read:'える', type:'trans', finger:'ring'},
+            'M': {read:'えむ', type:'parent', finger:'index'}, 'N': {read:'えぬ', type:'trans', finger:'index'}, 'O': {read:'おー', type:'parent', finger:'ring', fill:'fill-o'},
+            'P': {read:'ぴー', type:'parent', finger:'pinky'}, 'Q': {read:'きゅー', type:'trans', finger:'pinky'}, 'R': {read:'あーる', type:'trans', finger:'index'},
+            'S': {read:'えす', type:'parent', finger:'ring'}, 'T': {read:'てぃー', type:'trans', finger:'index'}, 'U': {read:'ゆー', type:'parent', finger:'index', fill:'fill-u'},
+            'V': {read:'ぶい', type:'parent', finger:'index'}, 'W': {read:'だぶりゅー', type:'parent', finger:'ring'}, 'X': {read:'えっくす', type:'parent', finger:'ring'},
+            'Y': {read:'わい', type:'trans', finger:'index'}, 'Z': {read:'ぜっと', type:'parent', finger:'pinky'}
+        };
+
+        const kbdRows = [
+            ["Q","W","E","R","T","Y","U","I","O","P"],
+            ["A","S","D","F","G","H","J","K","L"],
+            ["Z","X","C","V","B","N","M"]
+        ];
+
+        let audioCtx, cleared = new Set(), startTime, roundSolved = 0;
+        let parentMisses = 0, transMisses = 0, isSoundEnabled = true, voiceMode = 'ja', currentLayout = 'abc';
+        const alpha = Object.keys(charData);
+
+        function toggleSoundMaster() {
+            isSoundEnabled = !isSoundEnabled;
+            document.getElementById('soundMasterBtn').textContent = isSoundEnabled ? "[ 音・こえ: ON ]" : "[ 音・こえ: OFF ]";
+            document.getElementById('soundMasterBtn').classList.toggle('off', !isSoundEnabled);
+        }
+
+        function toggleVoiceMode() {
+            voiceMode = (voiceMode === 'ja') ? 'en' : 'ja';
+            document.getElementById('voiceModeBtn').textContent = (voiceMode === 'ja') ? "[ こえの しゅるい: 日本語よみ ]" : "[ こえの しゅるい: 英語ネイティブ ]";
+        }
+
+        function switchMapLayout(layout) {
+            currentLayout = layout;
+            const container = document.getElementById('collectionContainer');
+            
+            // ボタンの活性状態の更新
+            document.getElementById('layoutHideBtn').classList.toggle('active', layout === 'hide');
+            document.getElementById('layoutAbcBtn').classList.toggle('active', layout === 'abc');
+            document.getElementById('layoutKbdBtn').classList.toggle('active', layout === 'keyboard');
+            
+            if (layout === 'hide') {
+                container.classList.add('map-hidden');
+            } else {
+                container.classList.remove('map-hidden');
+                renderCollectionMap();
+            }
+        }
+
+        function renderCollectionMap() {
+            if (currentLayout === 'hide') return;
+            const grid = document.getElementById('collectionGrid');
+            grid.innerHTML = "";
+            
+            if (currentLayout === 'abc') {
+                const row = document.createElement('div'); row.className = 'kbd-row';
+                alpha.forEach(c => {
+                    const s = createSlot(c);
+                    row.appendChild(s);
+                    if(c === 'M') { grid.appendChild(row.cloneNode(true)); row.innerHTML = ""; }
+                });
+                grid.appendChild(row);
+            } else {
+                kbdRows.forEach(rowArr => {
+                    const rowDiv = document.createElement('div'); rowDiv.className = 'kbd-row';
+                    rowArr.forEach(c => { rowDiv.appendChild(createSlot(c)); });
+                    grid.appendChild(rowDiv);
+                });
+            }
+        }
+
+        function createSlot(c) {
+            const s = document.createElement('div');
+            const data = charData[c];
+            s.className = `char-slot border-${data.finger} ${cleared.has(c) ? 'active' : ''} ${data.fill || ''}`;
+            s.textContent = c;
+            return s;
+        }
+
+        function playSound(freq, type, dur, vol=0.1) {
+            if(!audioCtx || !isSoundEnabled) return;
+            const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            g.gain.setValueAtTime(vol, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + dur);
+        }
+
+        const sfx = {
+            ok: () => { playSound(523, 'sine', 0.2); setTimeout(()=>playSound(659, 'sine', 0.3), 100); },
+            ng: () => playSound(150, 'sawtooth', 0.3, 0.05),
+            clear: () => [523, 659, 783, 1046].forEach((f, i) => setTimeout(()=>playSound(f, 'sine', 0.4), i*100)),
+            perfect: () => [523, 659, 783, 1046, 1318].forEach((f, i) => setTimeout(()=>playSound(f, 'square', 0.6, 0.02), i*150))
+        };
+
+        function speak(char) {
+            return new Promise((resolve) => {
+                if (!isSoundEnabled) { resolve(); return; }
+                speechSynthesis.cancel();
+                const uttr = new SpeechSynthesisUtterance();
+                if (voiceMode === 'ja') { uttr.text = charData[char].read; uttr.lang = 'ja-JP'; }
+                else { uttr.text = char; uttr.lang = 'en-US'; }
+                uttr.onend = () => resolve(); uttr.onerror = () => resolve();
+                speechSynthesis.speak(uttr);
+            });
+        }
+
+        function initGame() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            document.getElementById('start-screen').style.display = 'none';
+            startTime = Date.now(); renderCollectionMap(); startRound();
+        }
+
+        function startRound() {
+            const src = document.getElementById('sources'), tgt = document.getElementById('targets');
+            const nextBtn = document.getElementById('nextBtn');
+            src.innerHTML = ""; tgt.innerHTML = "";
+            nextBtn.classList.remove('show'); // ボタンを隠す
+            
+            roundSolved = 0;
+            const remaining = alpha.filter(c => !cleared.has(c));
+            if (remaining.length === 0) return showResult();
+            
+            const current = remaining.sort(() => Math.random() - 0.5).slice(0, 5);
+            
+            current.sort(() => Math.random() - 0.5).forEach(c => {
+                const d = document.createElement('div');
+                d.className = 'draggable'; d.draggable = true;
+                d.innerHTML = `<span class="main-char">${c}</span><span class="reading-char">${charData[c].read}</span>`;
+                d.addEventListener('dragstart', (e) => { 
+                    e.dataTransfer.setData('text', c); 
+                    document.getElementById('status-msg').textContent = "おおもじ を はこぼう！"; 
+                    document.getElementById('status-msg').style.color = "#7f8c8d"; 
+                });
+                src.appendChild(d);
+            });
+
+            [...current].sort(() => Math.random() - 0.5).forEach(c => {
+                const z = document.createElement('div');
+                z.className = 'dropzone'; z.textContent = c.toLowerCase();
+                z.addEventListener('dragover', e => e.preventDefault());
+                z.addEventListener('drop', e => {
+                    const dropped = e.dataTransfer.getData('text');
+                    if(dropped === c && !z.classList.contains('success')) {
+                        z.classList.add('success'); z.textContent = c + c.toLowerCase();
+                        document.querySelectorAll('.draggable').forEach(el => { if(el.querySelector('.main-char').textContent === c) el.style.visibility = 'hidden'; });
+                        cleared.add(c); renderCollectionMap();
+                        roundSolved++; sfx.ok(); speak(c).then(() => {
+                            if(cleared.size === 26) {
+                                setTimeout(showResult, 500);
+                            } else if(roundSolved === 5 || remaining.length <= 5) { 
+                                document.getElementById('status-msg').textContent = "すばらしい！"; 
+                                nextBtn.classList.add('show'); // ここでボタンを表示
+                                sfx.clear();
+                            }
+                        });
+                    } else if(dropped !== c) { 
+                        if(charData[c].type === 'parent') parentMisses++; else transMisses++;
+                        sfx.ng(); document.getElementById('status-msg').textContent = "ちがう みたい！"; document.getElementById('status-msg').style.color = "var(--miss)";
+                    }
+                });
+                tgt.appendChild(z);
+            });
+        }
+
+        function showResult() {
+            document.getElementById('nextBtn').classList.remove('show');
+            const time = Math.floor((Date.now() - startTime) / 1000);
+            const res = document.getElementById('result-screen');
+            res.style.display = 'flex';
+            const perfect = (parentMisses + transMisses) === 0;
+            if(perfect) sfx.perfect(); else sfx.clear();
+            document.getElementById('result-content').innerHTML = `
+                <div style="font-size:32px; font-weight:bold; color:var(--gold); margin-bottom:10px;">*** ${perfect ? 'PERFECT!' : 'CLEAR!'} ***</div>
+                <div class="stats-card">
+                    <div class="stat-detail"><span>タイム</span> <b>${time}びょう</b></div>
+                    <div class="stat-detail"><span>おやこグループのミス</span> <b>${parentMisses}かい</b></div>
+                    <div class="stat-detail"><span>へんしんグループのミス</span> <b>${transMisses}かい</b></div>
+                </div>
+            `;
+            for(let i=0; i<80; i++) {
+                const c = document.createElement('div');
+                c.style.cssText = `position:fixed; width:10px; height:10px; background:hsl(${Math.random()*360},70%,60%); top:-10px; left:${Math.random()*100}vw; z-index:1100; pointer-events:none;`;
+                document.body.appendChild(c);
+                c.animate([{ transform: 'translateY(0) rotate(0)' }, { transform: `translateY(105vh) rotate(${Math.random()*720}deg)` }], { duration: 2000 + Math.random()*2000, easing: 'cubic-bezier(0,1,1,1)' }).onfinish = () => c.remove();
+            }
+        }
+    </script>
+</body>
+</html>

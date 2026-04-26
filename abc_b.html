@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アルファベット・クエスト</title>
+    <style>
+        :root { 
+            --primary: #3498db; --success: #2ecc71; --gold: #f1c40f; --miss: #e74c3c; --bg: #f8fbff; 
+            /* 指使いカラー */
+            --f-pinky: #ff5e57;  /* 赤 */
+            --f-ring: #2ed573;   /* 緑 */
+            --f-middle: #48c1fb; /* 青 */
+            --f-index: #feb72b;  /* オレンジ */
+            --f-vowel-o: #a55eea; /* 紫（O用） */
+        }
+        body { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding-bottom: 40px; overflow-x: hidden; }
+        
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.98); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; }
+        .main-title { font-size: 36px; color: var(--primary); font-weight: bold; margin-bottom: 5px; }
+        .sub-title { color: #7f8c8d; margin-bottom: 25px; font-size: 18px; }
+        
+        .voice-selector { 
+            background: #f0f0f0; padding: 6px; border-radius: 40px; display: flex; gap: 5px; margin-bottom: 30px; border: 2px solid #ddd;
+        }
+        .voice-btn {
+            padding: 12px 25px; border-radius: 30px; border: none; cursor: pointer; font-weight: bold; background: transparent; color: #888; transition: 0.3s; font-size: 16px;
+        }
+        .voice-btn.active { background: white; color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        /* コレクションマップ */
+        .collection-container { 
+            margin-top: 15px; padding: 15px; background: #d1d8e0; border-radius: 20px; 
+            width: 95%; max-width: 800px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.1); 
+            text-align: center; transition: all 0.3s ease;
+        }
+        /* 非表示時のコンテナスタイル */
+        .collection-container.map-hidden { padding: 10px 20px; background: #e2e8f0; }
+        .collection-container.map-hidden .collection-grid { display: none; }
+
+        .collection-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 10px; }
+        .collection-container.map-hidden .collection-header { margin-bottom: 0; }
+
+        .layout-switch-btn { padding: 6px 12px; font-size: 12px; background: white; border: 1px solid #ccc; border-radius: 20px; cursor: pointer; font-weight: bold; color: #666; margin-left: 4px; }
+        .layout-switch-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .collection-grid { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .kbd-row { display: flex; gap: 4px; justify-content: center; width: 100%; }
+
+        .char-slot { 
+            width: 30px; height: 38px; background: white; border: 2px solid #ccc; border-radius: 6px;
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; color: #bbb; font-size: 14px; transition: all 0.3s;
+        }
+        /* 指別の枠線 */
+        .border-pinky  { border-color: var(--f-pinky); }
+        .border-ring   { border-color: var(--f-ring); }
+        .border-middle { border-color: var(--f-middle); }
+        .border-index  { border-color: var(--f-index); }
+
+        /* クリア状態 */
+        .char-slot.active { color: white; border-width: 2px; }
+        .char-slot.active:not([class*="fill-"]) { background: var(--gold); border-color: #f39c12; }
+        .char-slot.active.fill-a { background: var(--f-pinky) !important; border-color: var(--f-pinky); }
+        .char-slot.active.fill-e { background: var(--f-ring) !important; border-color: var(--f-ring); }
+        .char-slot.active.fill-u { background: var(--f-index) !important; border-color: var(--f-index); }
+        .char-slot.active.fill-i { background: var(--f-middle) !important; border-color: var(--f-middle); }
+        .char-slot.active.fill-o { background: var(--f-vowel-o) !important; border-color: var(--f-vowel-o); }
+
+        .question-area { margin: 15px 0; text-align: center; min-height: 140px; }
+        .speaker-btn { 
+            width: 80px; height: 80px; border-radius: 50%; background: var(--primary); 
+            border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+            box-shadow: 0 6px 0 #2980b9; transition: 0.1s; margin-bottom: 8px;
+        }
+        .speaker-btn:active { transform: translateY(4px); box-shadow: none; }
+        .speaker-icon { font-size: 40px; color: white; }
+
+        #reading-display { 
+            font-size: 28px; font-weight: bold; color: #555; height: 42px; 
+            margin-top: 5px; background: #fff; padding: 5px 25px; border-radius: 30px;
+            display: inline-block; min-width: 140px; border: 2px solid #eee;
+        }
+
+        .choices-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 90%; max-width: 400px; }
+        .choice-card { 
+            background: white; border: 3px solid #eee; border-radius: 15px; padding: 20px 0;
+            font-size: 36px; font-weight: bold; color: #444; cursor: pointer; transition: 0.2s;
+            text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .choice-card:hover { border-color: var(--primary); }
+        .choice-card.correct { background: var(--success); color: white; border-color: var(--success); animation: pop 0.3s; }
+        .choice-card.wrong { background: var(--miss); color: white; border-color: var(--miss); }
+
+        @keyframes pop { 50% { transform: scale(1.1); } }
+        .btn { padding: 18px 50px; font-size: 22px; cursor: pointer; border-radius: 50px; border: none; background: var(--primary); color: white; font-weight: bold; box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4); transition: 0.2s; }
+        .btn:hover { transform: scale(1.05); background: #2980b9; }
+        #status-msg { font-size: 18px; font-weight: bold; color: #7f8c8d; margin-top: 10px; height: 24px; }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen" class="overlay">
+        <div class="main-title">アルファベット</div>
+        <div class="sub-title">こえの しゅるい を えらんでね</div>
+        
+        <div class="voice-selector">
+            <button id="mode-kana" class="voice-btn active" onclick="setVoiceMode('kana')">ひらがな (にほんご)</button>
+            <button id="mode-native" class="voice-btn" onclick="setVoiceMode('native')">Native (えいご)</button>
+        </div>
+
+        <button class="btn" onclick="initGame()">スタート</button>
+    </div>
+
+    <!-- 進捗マップセクション -->
+    <div class="collection-container" id="collectionContainer">
+        <div class="collection-header">
+            <div style="font-size: 12px; color: #666; font-weight: bold;">PROGRESS MAP</div>
+            <div>
+                <button id="layoutHideBtn" class="layout-switch-btn" onclick="switchMapLayout('hide')">非表示</button>
+                <button id="layoutAbcBtn" class="layout-switch-btn active" onclick="switchMapLayout('abc')">ABC順</button>
+                <button id="layoutKbdBtn" class="layout-switch-btn" onclick="switchMapLayout('keyboard')">キーボード</button>
+            </div>
+        </div>
+        <div class="collection-grid" id="collectionGrid"></div>
+    </div>
+
+    <div class="question-area">
+        <button class="speaker-btn" onclick="playCurrentTarget()">
+            <span class="speaker-icon">?</span>
+        </button>
+        <br>
+        <div id="reading-display">？</div>
+    </div>
+
+    <div class="choices-grid" id="choicesGrid"></div>
+    <div id="status-msg"></div>
+
+    <div id="result-screen" class="overlay" style="display:none;">
+        <div id="result-content"></div>
+        <button class="btn" onclick="location.reload()">もういちど あそぶ</button>
+    </div>
+
+    <script>
+        const charData = {
+            'A': { read: 'えー', finger: 'pinky', fill: 'fill-a' },
+            'B': { read: 'びー', finger: 'index' },
+            'C': { read: 'しー', finger: 'middle' },
+            'D': { read: 'でー', finger: 'middle' },
+            'E': { read: 'いー', finger: 'ring', fill: 'fill-e' },
+            'F': { read: 'えふ', finger: 'index' },
+            'G': { read: 'じー', finger: 'index' },
+            'H': { read: 'えいち', finger: 'index' },
+            'I': { read: 'あい', finger: 'middle', fill: 'fill-i' },
+            'J': { read: 'じぇー', finger: 'index' },
+            'K': { read: 'けー', finger: 'middle' },
+            'L': { read: 'える', finger: 'ring' },
+            'M': { read: 'えむ', finger: 'index' },
+            'N': { read: 'えぬ', finger: 'index' },
+            'O': { read: 'おー', finger: 'ring', fill: 'fill-o' },
+            'P': { read: 'ぴー', finger: 'pinky' },
+            'Q': { read: 'きゅー', finger: 'pinky' },
+            'R': { read: 'あーる', finger: 'index' },
+            'S': { read: 'えす', finger: 'ring' },
+            'T': { read: 'てぃー', finger: 'index' },
+            'U': { read: 'ゆー', finger: 'index', fill: 'fill-u' },
+            'V': { read: 'ぶい', finger: 'index' },
+            'W': { read: 'だぶりゅー', finger: 'ring' },
+            'X': { read: 'えっくす', finger: 'ring' },
+            'Y': { read: 'わい', finger: 'index' },
+            'Z': { read: 'ぜっと', finger: 'pinky' }
+        };
+
+        const kbdRows = [
+            ["Q","W","E","R","T","Y","U","I","O","P"],
+            ["A","S","D","F","G","H","J","K","L"],
+            ["Z","X","C","V","B","N","M"]
+        ];
+
+        const alphaKeys = Object.keys(charData);
+        let cleared = new Set();
+        let currentTarget = "";
+        let audioCtx;
+        let voiceMode = 'kana';
+        let currentLayout = 'abc';
+
+        function setVoiceMode(mode) {
+            voiceMode = mode;
+            document.getElementById('mode-native').classList.toggle('active', mode === 'native');
+            document.getElementById('mode-kana').classList.toggle('active', mode === 'kana');
+            
+            const uttr = new SpeechSynthesisUtterance(mode === 'native' ? "ABC" : "あいうえお");
+            uttr.lang = mode === 'native' ? 'en-US' : 'ja-JP';
+            speechSynthesis.cancel();
+            speechSynthesis.speak(uttr);
+        }
+
+        function switchMapLayout(layout) {
+            currentLayout = layout;
+            const container = document.getElementById('collectionContainer');
+            
+            // ボタンの活性状態の更新
+            document.getElementById('layoutHideBtn').classList.toggle('active', layout === 'hide');
+            document.getElementById('layoutAbcBtn').classList.toggle('active', layout === 'abc');
+            document.getElementById('layoutKbdBtn').classList.toggle('active', layout === 'keyboard');
+            
+            if (layout === 'hide') {
+                container.classList.add('map-hidden');
+            } else {
+                container.classList.remove('map-hidden');
+                renderCollectionMap();
+            }
+        }
+
+        function createSlot(c) {
+            const s = document.createElement('div');
+            const data = charData[c];
+            s.className = `char-slot border-${data.finger} ${cleared.has(c) ? 'active' : ''} ${data.fill || ''}`;
+            s.textContent = c;
+            return s;
+        }
+
+        function renderCollectionMap() {
+            if (currentLayout === 'hide') return;
+            const grid = document.getElementById('collectionGrid');
+            grid.innerHTML = "";
+            
+            if (currentLayout === 'abc') {
+                const row = document.createElement('div'); row.className = 'kbd-row';
+                alphaKeys.forEach(c => {
+                    row.appendChild(createSlot(c));
+                    if(c === 'M') { grid.appendChild(row.cloneNode(true)); row.innerHTML = ""; }
+                });
+                grid.appendChild(row);
+            } else {
+                kbdRows.forEach(rowArr => {
+                    const rowDiv = document.createElement('div'); rowDiv.className = 'kbd-row';
+                    rowArr.forEach(c => { rowDiv.appendChild(createSlot(c)); });
+                    grid.appendChild(rowDiv);
+                });
+            }
+        }
+
+        function initGame() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            document.getElementById('start-screen').style.display = 'none';
+            renderCollectionMap();
+            nextQuestion();
+        }
+
+        function playCurrentTarget() {
+            if (!currentTarget) return;
+            speechSynthesis.cancel();
+            
+            const uttr = new SpeechSynthesisUtterance();
+            if (voiceMode === 'native') {
+                uttr.text = currentTarget;
+                uttr.lang = 'en-US';
+                uttr.rate = 0.8;
+            } else {
+                uttr.text = charData[currentTarget].read;
+                uttr.lang = 'ja-JP';
+                uttr.rate = 1.0;
+            }
+            speechSynthesis.speak(uttr);
+        }
+
+        function nextQuestion() {
+            const remaining = alphaKeys.filter(c => !cleared.has(c));
+            if (remaining.length === 0) return showResult();
+
+            document.getElementById('status-msg').textContent = "";
+            currentTarget = remaining[Math.floor(Math.random() * remaining.length)];
+            document.getElementById('reading-display').textContent = charData[currentTarget].read;
+            
+            let choices = [currentTarget];
+            while(choices.length < 4) {
+                let randomChar = alphaKeys[Math.floor(Math.random() * alphaKeys.length)];
+                if(!choices.includes(randomChar)) choices.push(randomChar);
+            }
+            choices.sort(() => Math.random() - 0.5);
+
+            const grid = document.getElementById('choicesGrid');
+            grid.innerHTML = "";
+            choices.forEach(c => {
+                const card = document.createElement('div');
+                card.className = 'choice-card';
+                card.textContent = c;
+                card.onclick = () => checkAnswer(c, card);
+                grid.appendChild(card);
+            });
+
+            setTimeout(playCurrentTarget, 300);
+        }
+
+        function checkAnswer(selected, element) {
+            if (selected === currentTarget) {
+                element.classList.add('correct');
+                cleared.add(currentTarget);
+                renderCollectionMap(); // マップを更新
+                document.getElementById('status-msg').textContent = "すごい！";
+                playSfx(659, 0.3);
+                setTimeout(nextQuestion, 1200);
+            } else {
+                element.classList.add('wrong');
+                document.getElementById('status-msg').textContent = "えらびなおそう!";
+                playSfx(150, 0.2);
+                setTimeout(() => element.classList.remove('wrong'), 500);
+            }
+        }
+
+        function playSfx(freq, dur) {
+            if(!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + dur);
+        }
+
+        function showResult() {
+            document.getElementById('result-screen').style.display = 'flex';
+            document.getElementById('result-content').innerHTML = `
+                <div class="main-title">MISSION COMPLETE!</div>
+                <p>ぜんぶの アルファベットを クリアしたね！</p>
+            `;
+        }
+    </script>
+</body>
+</html>

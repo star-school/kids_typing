@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ローマじ・ますたー・くえすと Pro</title>
+    <style>
+        :root {
+            --color-a: #ff5e57; --color-i: #48c1fb; --color-u: #feb72b;
+            --color-e: #2ed573; --color-o: #a55eea;
+            --bg-color: #f8f9fa;
+            --f-pinky: #ff6b81; --f-ring: #2ed573; --f-middle: #54a0ff; --f-index: #ff9f43;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --primary: #3498db;
+        }
+
+        body { 
+            background: var(--bg-color); 
+            font-family: 'Hiragino Kaku Gothic Pro', 'ヒラギノ角ゴ Pro W3', 'Meiryo', sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            min-height: 100vh; margin: 0; overflow: hidden; color: #2c3e50;
+        }
+        
+        .screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 800px; animation: fadeIn 0.3s ease-out; }
+        .active { display: flex; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1 { font-size: clamp(32px, 8vw, 56px); color: #2c3e50; text-shadow: 3px 3px 0px #fff; margin-bottom: 20px; }
+        
+        /* 設定セクション */
+        .settings-container {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            width: 90%;
+            max-width: 500px;
+        }
+        .setting-group { margin-bottom: 20px; }
+        .setting-label { font-weight: bold; margin-bottom: 10px; display: block; text-align: left; font-size: 18px; }
+        .btn-group { display: flex; gap: 10px; justify-content: center; }
+        
+        .toggle-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            background: #eee;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .toggle-btn.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 0 #2980b9;
+            transform: translateY(-2px);
+        }
+
+        /* ボタン共通 */
+        .menu-btn { 
+            width: 280px; padding: 16px; margin: 10px; font-size: 20px; font-weight: bold; 
+            cursor: pointer; border: none; border-radius: 16px; color: white;
+            transition: all 0.2s; box-shadow: 0 6px 0 rgba(0,0,0,0.2); position: relative;
+        }
+        .menu-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+        .btn-time { background: #3498db; }
+        .btn-nomiss { background: #e67e22; }
+        .btn-howto { background: #2ecc71; }
+        .btn-back { background: #95a5a6; width: 200px; margin-top: 30px; }
+
+        /* ゲーム画面 */
+        #game-container { 
+            position: relative; width: 450px; height: 400px; 
+            background: #fff; border: 6px solid #333; border-radius: 20px; 
+            overflow: hidden; box-shadow: var(--shadow);
+        }
+
+        #judgment-zone { 
+            position: absolute; bottom: 30px; width: 100%; height: 70px; 
+            background: rgba(46, 213, 115, 0.1); border-top: 3px dashed #2ecc71; 
+            border-bottom: 3px dashed #2ecc71; z-index: 1; 
+        }
+
+        .block { 
+            position: absolute; width: 70px; height: 80px; border-radius: 12px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            font-weight: bold; color: white; z-index: 2; transition: transform 0.1s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .hit-effect {
+            position: absolute; font-size: 24px; font-weight: bold; color: #2ecc71;
+            pointer-events: none; animation: floatUp 0.5s forwards; z-index: 10;
+        }
+        @keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-40px); } }
+
+        /* キーボード */
+        #keyboard-area { margin-top: 20px; background: #dfe4ea; padding: 12px; border-radius: 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+        .key-row { display: flex; justify-content: center; margin-bottom: 6px; }
+        .key { 
+            width: 38px; height: 45px; background: #fff; border-radius: 8px; margin: 3px; 
+            display: flex; align-items: center; justify-content: center; font-size: 14px; 
+            font-weight: bold; border-bottom: 4px solid #bdc3c7; transition: all 0.1s;
+        }
+        .f-pinky { border-top: 3px solid var(--f-pinky); } 
+        .f-ring { border-top: 3px solid var(--f-ring); } 
+        .f-middle { border-top: 3px solid var(--f-middle); } 
+        .f-index { border-top: 3px solid var(--f-index); }
+        
+        .target-a { background: var(--color-a) !important; color: white; }
+        .target-i { background: var(--color-i) !important; color: white; }
+        .target-u { background: var(--color-u) !important; color: white; }
+        .target-e { background: var(--color-e) !important; color: white; }
+        .target-o { background: var(--color-o) !important; color: white; }
+        
+        .pressed { transform: translateY(2px); border-bottom-width: 1px; background: #95a5a6 !important; color: white; }
+
+        #ui-layer { width: 450px; display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 20px; font-weight: bold; }
+        #combo-display { color: #e67e22; font-size: 24px; text-shadow: 1px 1px 0 white; min-height: 1.5em; }
+        #timer-display { color: #e74c3c; }
+
+        /* リザルト */
+        .result-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); text-align: center; width: 400px; }
+        .stat-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f2f6; font-size: 20px; }
+        .vowel-analysis { margin-top: 20px; }
+        .v-bar-container { height: 10px; background: #eee; border-radius: 5px; overflow: hidden; margin: 5px 0 15px 0; }
+        .v-bar { height: 100%; width: 0%; transition: width 1s ease-out; }
+    </style>
+</head>
+<body>
+
+    <!-- タイトル画面 -->
+    <div id="title-screen" class="screen active">
+        <h1>ローマじクエスト</h1>
+        
+        <div class="settings-container">
+            <div class="setting-group">
+                <span class="setting-label">2. はやさを えらぼう</span>
+                <div class="btn-group">
+                    <button class="toggle-btn" id="speed-slow" onclick="setSpeed('slow')">ゆっくり</button>
+                    <button class="toggle-btn selected" id="speed-normal" onclick="setSpeed('normal')">ふつう</button>
+                    <button class="toggle-btn" id="speed-fast" onclick="setSpeed('fast')">はやい</button>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <span class="setting-label">3. あそぶじかん</span>
+                <div class="btn-group">
+                    <button class="toggle-btn" id="time-30" onclick="setTime(30)">30びょう</button>
+                    <button class="toggle-btn selected" id="time-60" onclick="setTime(60)">60びょう</button>
+                    <button class="toggle-btn" id="time-90" onclick="setTime(90)">90びょう</button>
+                </div>
+            </div>
+        </div>
+
+        <button class="menu-btn btn-time" onclick="startGame('time')">タイムチャレンジ</button>
+        <button class="menu-btn btn-nomiss" onclick="startGame('nomiss')">のーみす チャレンジ</button>
+        <button class="menu-btn btn-howto" onclick="switchScreen('howto-screen')">あそびかた</button>
+    </div>
+
+    <!-- あそびかた -->
+    <div id="howto-screen" class="screen">
+        <div style="background: white; padding: 30px; border-radius: 20px; max-width: 500px; box-shadow: var(--shadow);">
+            <h2 style="color:#2ecc71; margin-top:0;">あそびかた</h2>
+            <p><strong>1. おちてくる文字を打とう！</strong><br>「ka」なら「A」のように、右側のアルファベットを打ってね。</p>
+            <p><strong>2. タイミングがだいじ！</strong><br>みどりの点線のわくの中で打つと「Perfect」だよ！</p>
+            <p><strong>3. 設定をかえてみよう！</strong><br>「ゆっくり」は、ずっと同じはやさで文字が出るよ。</p>
+            <button class="menu-btn btn-back" onclick="showTitle()">もどる</button>
+        </div>
+    </div>
+
+    <!-- ゲーム画面 -->
+    <div id="game-screen" class="screen">
+        <div id="ui-layer">
+            <div id="timer-display">のこり: 60</div>
+            <div id="score-display">00000</div>
+        </div>
+        <div id="combo-display"></div>
+        <div id="game-container">
+            <div id="judgment-zone"></div>
+        </div>
+        <div id="keyboard-area"></div>
+    </div>
+
+    <!-- リザルト画面 -->
+    <div id="result-screen" class="screen">
+        <div class="result-card">
+            <h2 id="result-title">けっか</h2>
+            <div id="stats-area"></div>
+            <div class="vowel-analysis" id="analysis-area"></div>
+            <button class="menu-btn btn-back" onclick="showTitle()">タイトルに　もどる</button>
+        </div>
+    </div>
+
+<script>
+const romanMap = {'ka':'か','ki':'き','ku':'く','ke':'け','ko':'こ','sa':'さ','si':'し','su':'す','se':'せ','so':'そ','ta':'た','ti':'ち','tu':'つ','te':'て','to':'と','na':'な','ni':'に','nu':'ぬ','ne':'ね','no':'の','ha':'は','hi':'ひ','hu':'ふ','he':'へ','ho':'ほ','ma':'ま','mi':'み','mu':'む','me':'め','mo':'も','ra':'ら','ri':'り','ru':'る','re':'れ','ro':'ろ'};
+const vowels = ['a','i','u','e','o'];
+const consonants = ['k','s','t','n','h','m','r'];
+const fingerMap = {
+    'q':'f-pinky','a':'f-pinky','z':'f-pinky','w':'f-ring','s':'f-ring','x':'f-ring','e':'f-middle','d':'f-middle','c':'f-middle','r':'f-index','t':'f-index','f':'f-index','g':'f-index','v':'f-index','b':'f-index','y':'f-index','u':'f-index','h':'f-index','j':'f-index','n':'f-index','m':'f-index','i':'f-middle','k':'f-middle','o':'f-ring','l':'f-ring','p':'f-pinky'
+};
+const kbLayout = [["Q","W","E","R","T","Y","U","I","O","P"],["A","S","D","F","G","H","J","K","L"],["Z","X","C","V","B","N","M"]];
+
+let config = {
+    speed: 'normal', // slow, normal, fast
+    time: 60
+};
+
+let state = {
+    mode: '', score: 0, combo: 0, missCount: 0, clearCount: 0, 
+    timer: 60, interval: null, spawnTimer: null, 
+    vowelMisses: {a:0, i:0, u:0, e:0, o:0}, 
+    vowelTotal: {a:0, i:0, u:0, e:0, o:0},
+    activeBlocks: [], startTime: 0, isGameActive: false
+};
+
+// キーボード生成
+const kbArea = document.getElementById('keyboard-area');
+kbLayout.forEach(row => {
+    const rowDiv = document.createElement('div'); rowDiv.className = 'key-row';
+    row.forEach(k => {
+        const char = k.toLowerCase();
+        const div = document.createElement('div');
+        div.className = `key ${fingerMap[char] || ''}`;
+        div.id = `key-${char}`;
+        if(vowels.includes(char)) div.classList.add(`target-${char}`);
+        div.innerText = k;
+        rowDiv.appendChild(div);
+    });
+    kbArea.appendChild(rowDiv);
+});
+
+function setSpeed(val) {
+    config.speed = val;
+    document.querySelectorAll('[id^="speed-"]').forEach(el => el.classList.remove('selected'));
+    document.getElementById(`speed-${val}`).classList.add('selected');
+}
+
+function setTime(val) {
+    config.time = val;
+    document.querySelectorAll('[id^="time-"]').forEach(el => el.classList.remove('selected'));
+    document.getElementById(`time-${val}`).classList.add('selected');
+}
+
+function startGame(mode) {
+    state = {
+        mode: mode, score: 0, combo: 0, missCount: 0, clearCount: 0, 
+        timer: config.time, vowelMisses: {a:0, i:0, u:0, e:0, o:0}, 
+        vowelTotal: {a:0, i:0, u:0, e:0, o:0},
+        activeBlocks: [], startTime: Date.now(), isGameActive: true
+    };
+    
+    switchScreen('game-screen');
+    updateUI();
+
+    if(mode === 'time') {
+        state.interval = setInterval(() => {
+            state.timer--;
+            document.getElementById('timer-display').innerText = `のこり: ${state.timer}`;
+            if(state.timer <= 0) endGame();
+        }, 1000);
+    } else {
+        document.getElementById('timer-display').innerText = `NO MISS!`;
+    }
+
+    gameLoop();
+    scheduleNextSpawn();
+}
+
+function scheduleNextSpawn() {
+    if(!state.isGameActive) return;
+    createBlock();
+    
+    let nextTime;
+    if(config.speed === 'slow') {
+        // ゆっくり：常に一定間隔（2秒）
+        nextTime = 2000;
+    } else {
+        // はやさ設定に基づいた出現間隔
+        let baseInterval = config.speed === 'fast' ? 1000 : 1500;
+        nextTime = Math.max(800, baseInterval - (state.clearCount * 20));
+    }
+
+    state.spawnTimer = setTimeout(scheduleNextSpawn, nextTime);
+}
+
+function createBlock() {
+    const c = consonants[Math.floor(Math.random()*consonants.length)];
+    const v = vowels[Math.floor(Math.random()*vowels.length)];
+    const comboText = c + v;
+    const el = document.createElement('div');
+    el.className = `block target-${v}`;
+    el.innerHTML = `<div style="font-size:26px">${romanMap[comboText]}</div><div style="font-size:16px">${comboText}</div>`;
+    el.style.left = (Math.random() * 360 + 10) + 'px';
+    el.style.top = '-90px';
+    document.getElementById('game-container').appendChild(el);
+    
+    state.vowelTotal[v]++;
+    
+    let blockSpeed;
+    if(config.speed === 'slow') {
+        // ゆっくり：常に一定の落下スピード、ランダム要素なし
+        blockSpeed = 1.2;
+    } else {
+        // ふつう・はやい：加速あり、わずかなランダム要素あり
+        let baseSpeed = config.speed === 'fast' ? 3.2 : 2.0;
+        blockSpeed = baseSpeed + (state.clearCount * 0.05) + Math.random();
+    }
+
+    state.activeBlocks.push({
+        el: el, v: v, y: -90, 
+        speed: blockSpeed
+    });
+}
+
+function gameLoop() {
+    if(!state.isGameActive) return;
+
+    for(let i = state.activeBlocks.length - 1; i >= 0; i--) {
+        const b = state.activeBlocks[i];
+        b.y += b.speed;
+        b.el.style.top = b.y + 'px';
+
+        if(b.y > 400) {
+            handleMiss(b.v);
+            removeBlock(i);
+            if(state.mode === 'nomiss') endGame();
+        }
+    }
+    requestAnimationFrame(gameLoop);
+}
+
+function handleMiss(v) {
+    state.missCount++;
+    state.combo = 0;
+    state.vowelMisses[v]++;
+    updateUI();
+    showEffect("MISS...", 350, "#e74c3c");
+}
+
+function removeBlock(index) {
+    const b = state.activeBlocks[index];
+    if(b.el.parentNode) b.el.parentNode.removeChild(b.el);
+    state.activeBlocks.splice(index, 1);
+}
+
+function showEffect(text, y, color) {
+    const eff = document.createElement('div');
+    eff.className = 'hit-effect';
+    eff.innerText = text;
+    eff.style.left = '50%';
+    eff.style.top = y + 'px';
+    eff.style.color = color;
+    document.getElementById('game-container').appendChild(eff);
+    setTimeout(() => eff.remove(), 500);
+}
+
+window.addEventListener('keydown', (e) => {
+    if(!state.isGameActive) return;
+    const key = e.key.toLowerCase();
+    const keyEl = document.getElementById(`key-${key}`);
+    
+    if(keyEl) {
+        keyEl.classList.add('pressed');
+        setTimeout(() => keyEl.classList.remove('pressed'), 100);
+    }
+
+    if(vowels.includes(key)) {
+        const hitIdx = state.activeBlocks.findIndex(b => b.v === key && b.y > 270 && b.y < 380);
+        
+        if(hitIdx !== -1) {
+            const b = state.activeBlocks[hitIdx];
+            let points = 100;
+            let msg = "GOOD";
+            
+            if(b.y > 300 && b.y < 350) {
+                points = 200;
+                msg = "PERFECT!!";
+            }
+
+            state.combo++;
+            state.score += points + (state.combo * 10);
+            state.clearCount++;
+            showEffect(msg, b.y, "#2ecc71");
+            removeBlock(hitIdx);
+        } else {
+            handleMiss(key);
+            if(state.mode === 'nomiss') endGame();
+        }
+        updateUI();
+    }
+});
+
+function updateUI() {
+    document.getElementById('score-display').innerText = state.score.toString().padStart(5, '0');
+    const comboEl = document.getElementById('combo-display');
+    comboEl.innerText = state.combo > 1 ? `${state.combo} COMBO!` : "";
+}
+
+function endGame() {
+    state.isGameActive = false;
+    clearInterval(state.interval);
+    clearTimeout(state.spawnTimer);
+    
+    const container = document.getElementById('game-container');
+    while(container.children.length > 1) {
+        if(container.lastChild.id !== 'judgment-zone') container.removeChild(container.lastChild);
+        else break;
+    }
+    
+    showResult();
+}
+
+function showResult() {
+    switchScreen('result-screen');
+    const stats = document.getElementById('stats-area');
+    const analysis = document.getElementById('analysis-area');
+    const playTime = Math.floor((Date.now() - state.startTime) / 1000);
+
+    const speedLabel = config.speed === 'slow' ? 'ゆっくり' : config.speed === 'fast' ? 'はやい' : 'ふつう';
+    document.getElementById('result-title').innerText = 
+        state.mode === 'time' ? `${config.time}びょう チャレンジ (${speedLabel})` : "のーみす チャレンジ けっか";
+
+    stats.innerHTML = `
+        <div class="stat-row"><span>スコア</span><b>${state.score}</b></div>
+        <div class="stat-row"><span>クリア数</span><b>${state.clearCount}もん</b></div>
+        ${state.mode === 'nomiss' ? `<div class="stat-row"><span>タイム</span><b>${playTime}びょう</b></div>` : ""}
+    `;
+
+    analysis.innerHTML = `<h3 style="margin-bottom:10px">にがてな「ぼいん」をチェック！</h3>`;
+    vowels.forEach(v => {
+        const miss = state.vowelMisses[v];
+        const total = state.vowelTotal[v] || 1;
+        const missRate = (miss / total) * 100;
+        
+        analysis.innerHTML += `
+            <div style="display:flex; justify-content:space-between; font-size:14px">
+                <span>${v.toUpperCase()} (ミス: ${miss})</span>
+                <span>${Math.round(100 - missRate)}% 成功</span>
+            </div>
+            <div class="v-bar-container">
+                <div class="v-bar target-${v}" id="bar-${v}"></div>
+            </div>
+        `;
+        setTimeout(() => {
+            const bar = document.getElementById(`bar-${v}`);
+            if(bar) bar.style.width = (100 - missRate) + "%";
+        }, 100);
+    });
+}
+
+function switchScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function showTitle() { switchScreen('title-screen'); }
+</script>
+</body>
+</html>
