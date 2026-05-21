@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ローマじ つなぎ - くみあわせ マスター</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&display=swap');
+
+        :root {
+            --bg-color: #f0f9ff;
+            --primary-color: #3b82f6;
+            --consonant-color: #ef4444; 
+            --vowel-color: #10b981;    
+            --key-f1: #ffb3ba; --key-f2: #ffdfba; --key-f3: #ffffba; --key-f4: #baffc9;
+            --key-f5: #bae1ff; --key-f6: #e1baff; --key-f7: #ffbaff; --key-f8: #d1d1d1;
+        }
+
+        body {
+            font-family: 'Kiwi Maru', serif;
+            background-color: var(--bg-color);
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .slot {
+            width: 80px;
+            height: 100px;
+            border: 4px dashed #cbd5e1;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .slot.active {
+            border-color: var(--primary-color);
+            background-color: #eff6ff;
+            transform: scale(1.05);
+        }
+
+        .slot.filled {
+            border-style: solid;
+            background-color: white;
+            border-color: #94a3b8;
+        }
+
+        .slot-consonant.filled { border-color: var(--consonant-color); color: var(--consonant-color); }
+        .slot-vowel.filled { border-color: var(--vowel-color); color: var(--vowel-color); }
+
+        .keyboard {
+            display: grid;
+            gap: 6px;
+            justify-content: center;
+            background: #e2e8f0;
+            padding: 15px;
+            border-radius: 1rem;
+        }
+        .kb-row { display: flex; gap: 6px; justify-content: center; }
+        .key {
+            width: 45px;
+            height: 45px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            border-bottom: 4px solid #cbd5e1;
+            transition: all 0.1s;
+        }
+        .key.active { transform: translateY(2px); border-bottom-width: 1px; background-color: #fbbf24 !important; }
+
+        .f-pink { border-top: 4px solid var(--key-f1); }
+        .f-orange { border-top: 4px solid var(--key-f2); }
+        .f-yellow { border-top: 4px solid var(--key-f3); }
+        .f-green { border-top: 4px solid var(--key-f4); }
+        .f-blue { border-top: 4px solid var(--key-f5); }
+        .f-purple { border-top: 4px solid var(--key-f6); }
+        .f-red { border-top: 4px solid var(--key-f7); }
+
+        .vowel-highlight { background-color: #d1fae5; border-color: var(--vowel-color); }
+        
+        /* 子音（1ステップ目）ヒントのパルスアニメーション - 赤色に変化 */
+        .target-consonant { 
+            animation: pulse-consonant 1.5s infinite; 
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); 
+            border-color: var(--consonant-color) !important;
+        }
+
+        /* 母音（2ステップ目）ヒントのパルスアニメーション - 緑色に変化 */
+        .target-vowel { 
+            animation: pulse-vowel 1.5s infinite; 
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.6); 
+            border-color: var(--vowel-color) !important;
+        }
+        
+        @keyframes pulse-consonant {
+            0% { transform: scale(1); background-color: white; }
+            50% { transform: scale(1.1); background-color: #fee2e2; } /* 薄い赤色 */
+            100% { transform: scale(1); background-color: white; }
+        }
+
+        @keyframes pulse-vowel {
+            0% { transform: scale(1); background-color: #d1fae5; } /* 母音の薄い緑 */
+            50% { transform: scale(1.1); background-color: #a7f3d0; } /* 少し濃い薄緑 */
+            100% { transform: scale(1); background-color: #d1fae5; }
+        }
+
+        .floating-text {
+            position: absolute;
+            animation: floatUp 0.8s ease-out forwards;
+            pointer-events: none;
+            font-weight: bold;
+            font-size: 2rem;
+            z-index: 100;
+        }
+        @keyframes floatUp {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-50px); }
+        }
+
+        .btn-config.active-config {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #2563eb;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
+
+    <div id="app" class="w-full max-w-4xl">
+        <!-- メニュー画面 -->
+        <div id="start-screen" class="game-card p-10 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-blue-600 mb-6">ローマじ つなぎ</h1>
+            <p class="text-xl text-gray-600 mb-8">
+                「こども もじ（K, S...）」と「おかあさん もじ（A, I...）」を<br>
+                あわせて、ローマじを つくってみよう！
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 text-left">
+                <div class="p-4 border-2 border-blue-100 rounded-xl bg-blue-50">
+                    <p class="font-bold mb-2">ヒント</p>
+                    <div class="flex gap-2">
+                        <button onclick="setConfig('hint', true, this)" class="btn-config px-4 py-2 bg-white rounded-full border-2 border-gray-200 flex-1 active-config">あり (ON)</button>
+                        <button onclick="setConfig('hint', false, this)" class="btn-config px-4 py-2 bg-white rounded-full border-2 border-gray-200 flex-1">なし (OFF)</button>
+                    </div>
+                    <p id="hint-desc" class="text-xs text-blue-500 mt-2">打つ場所が 光って、ゆっくり 練習できます。</p>
+                </div>
+                <div class="p-4 border-2 border-green-100 rounded-xl bg-green-50">
+                    <p class="font-bold mb-2">もんだい の ならび</p>
+                    <div class="flex gap-2">
+                        <button onclick="setConfig('mode', 'step', this)" class="btn-config px-4 py-2 bg-white rounded-full border-2 border-gray-200 flex-1 active-config">じゅんばん</button>
+                        <button onclick="setConfig('mode', 'random', this)" class="btn-config px-4 py-2 bg-white rounded-full border-2 border-gray-200 flex-1">バラバラ</button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="startGame()" class="px-12 py-4 bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold rounded-full transition-all transform hover:scale-105 shadow-lg">
+                スタート！
+            </button>
+        </div>
+
+        <!-- ゲーム画面 -->
+        <div id="game-screen" class="hidden">
+            <div class="game-card p-6 md:p-10 relative">
+                <div class="flex justify-between items-center mb-8">
+                    <div class="text-2xl font-bold text-blue-500">スコア: <span id="score">0</span></div>
+                    <div class="text-2xl font-bold text-orange-500" id="combo-container" style="visibility:hidden;"><span id="combo">0</span> れんぞく！</div>
+                    <button onclick="location.reload()" class="text-gray-400 hover:text-gray-600 underline">やめる</button>
+                </div>
+
+                <div class="flex flex-col items-center mb-10">
+                    <div id="target-kana" class="text-8xl mb-6 font-bold text-gray-800">か</div>
+                    
+                    <div class="flex gap-4">
+                        <div id="slot-1" class="slot slot-consonant"></div>
+                        <div class="text-4xl flex items-center text-gray-300">＋</div>
+                        <div id="slot-2" class="slot slot-vowel"></div>
+                    </div>
+                    <div id="guide-msg" class="mt-6 text-xl text-gray-500 h-8 font-medium"></div>
+                </div>
+
+                <div id="keyboard-area" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- リザルト画面 -->
+        <div id="result-screen" class="hidden game-card p-10 text-center">
+            <h2 class="text-4xl font-bold text-blue-600 mb-4">しんだん けっか</h2>
+            
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <div class="bg-blue-50 p-4 rounded-2xl">
+                    <p class="text-sm text-blue-500 font-bold mb-1">せいかくさ</p>
+                    <p class="text-3xl font-bold text-blue-700"><span id="final-accuracy">0</span>%</p>
+                </div>
+                <div class="bg-orange-50 p-4 rounded-2xl">
+                    <p class="text-sm text-orange-500 font-bold mb-1">といた かず</p>
+                    <p class="text-3xl font-bold text-orange-700"><span id="final-count">0</span>問</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-2xl">
+                    <p class="text-sm text-green-500 font-bold mb-1">かかった時間</p>
+                    <p class="text-3xl font-bold text-green-700"><span id="final-time">0</span>秒</p>
+                </div>
+            </div>
+
+            <div class="text-7xl font-bold mb-4 text-orange-500" id="final-score">0</div>
+            <p class="text-2xl text-gray-700 mb-8" id="feedback-text">すばらしい！ がったい マスターだね！</p>
+            
+            <div id="result-stats" class="text-left max-w-md mx-auto mb-8 bg-gray-50 p-6 rounded-2xl border-2 border-blue-50">
+            </div>
+
+            <button onclick="location.reload()" class="px-12 py-4 bg-blue-500 text-white text-2xl font-bold rounded-full shadow-lg hover:bg-blue-600 transition-colors">
+                もういちど あそぶ
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const config = {
+            hint: true,
+            mode: 'step'
+        };
+
+        const state = {
+            isPlaying: false,
+            score: 0,
+            combo: 0,
+            currentIndex: 0,
+            currentStep: 0,
+            questions: [],
+            mistakes: {},
+            correctCount: 0,
+            totalKeyStrokes: 0,
+            correctKeyStrokes: 0,
+            startTime: 0,
+            endTime: 0
+        };
+
+        const ROMAJI_DATA = [
+            { kana: 'か', romaji: 'KA' }, { kana: 'き', romaji: 'KI' }, { kana: 'く', romaji: 'KU' }, { kana: 'け', romaji: 'KE' }, { kana: 'こ', romaji: 'KO' },
+            { kana: 'さ', romaji: 'SA' }, { kana: 'し', romaji: 'SI' }, { kana: 'す', romaji: 'SU' }, { kana: 'せ', romaji: 'SE' }, { kana: 'そ', romaji: 'SO' },
+            { kana: 'た', romaji: 'TA' }, { kana: 'ち', romaji: 'TI' }, { kana: 'つ', romaji: 'TU' }, { kana: 'て', romaji: 'TE' }, { kana: 'と', romaji: 'TO' },
+            { kana: 'な', romaji: 'NA' }, { kana: 'に', romaji: 'NI' }, { kana: 'ぬ', romaji: 'NU' }, { kana: 'ね', romaji: 'NE' }, { kana: 'の', romaji: 'NO' },
+            { kana: 'は', romaji: 'HA' }, { kana: 'ひ', romaji: 'HI' }, { kana: 'ふ', romaji: 'HU' }, { kana: 'へ', romaji: 'HE' }, { kana: 'ほ', romaji: 'HO' },
+            { kana: 'ま', romaji: 'MA' }, { kana: 'み', romaji: 'MI' }, { kana: 'む', romaji: 'MU' }, { kana: 'め', romaji: 'ME' }, { kana: 'も', romaji: 'MO' }
+        ];
+
+        const kbRows = [
+            ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+            ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+            ["Z", "X", "C", "V", "B", "N", "M"]
+        ];
+
+        const fingerMap = {
+            'Q': 'f-pink', 'A': 'f-pink', 'Z': 'f-pink',
+            'W': 'f-orange', 'S': 'f-orange', 'X': 'f-orange',
+            'E': 'f-yellow', 'D': 'f-yellow', 'C': 'f-yellow',
+            'R': 'f-green', 'F': 'f-green', 'V': 'f-green',
+            'T': 'f-green', 'G': 'f-green', 'B': 'f-green',
+            'Y': 'f-blue', 'H': 'f-blue', 'N': 'f-blue',
+            'U': 'f-blue', 'J': 'f-blue', 'M': 'f-blue',
+            'I': 'f-purple', 'K': 'f-purple',
+            'O': 'f-red', 'L': 'f-red',
+            'P': 'f-red'
+        };
+
+        const vowels = ["A", "I", "U", "E", "O"];
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(freq, type = 'sine', duration = 0.1) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function setConfig(key, value, btn) {
+            config[key] = value;
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.btn-config').forEach(b => b.classList.remove('active-config'));
+            btn.classList.add('active-config');
+
+            if (key === 'hint') {
+                const desc = document.getElementById('hint-desc');
+                if (value === true) desc.innerText = "打つ場所が 光って、ゆっくり 練習できます。";
+                else desc.innerText = "ヒントが 消えて、テンポよく 練習できます。";
+            }
+        }
+
+        function setupKeyboard() {
+            const area = document.getElementById('keyboard-area');
+            area.innerHTML = '';
+            const container = document.createElement('div');
+            container.className = 'keyboard';
+            kbRows.forEach(row => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'kb-row';
+                row.forEach(key => {
+                    const keyDiv = document.createElement('div');
+                    keyDiv.className = `key ${fingerMap[key] || ''}`;
+                    keyDiv.id = `key-${key}`;
+                    keyDiv.innerText = key;
+                    if (vowels.includes(key)) keyDiv.classList.add('vowel-highlight');
+                    rowDiv.appendChild(keyDiv);
+                });
+                container.appendChild(rowDiv);
+            });
+            area.appendChild(container);
+        }
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            setupKeyboard();
+            state.isPlaying = true;
+            state.score = 0;
+            state.currentIndex = 0;
+            state.correctCount = 0;
+            state.totalKeyStrokes = 0;
+            state.correctKeyStrokes = 0;
+            state.mistakes = {};
+            state.questions = config.mode === 'random' ? [...ROMAJI_DATA].sort(() => Math.random() - 0.5) : [...ROMAJI_DATA];
+            state.startTime = Date.now();
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            if (!state.isPlaying) return;
+            if (state.currentIndex >= state.questions.length) {
+                endGame();
+                return;
+            }
+            const q = state.questions[state.currentIndex];
+            document.getElementById('target-kana').innerText = q.kana;
+            state.currentStep = 0;
+            
+            const s1 = document.getElementById('slot-1');
+            const s2 = document.getElementById('slot-2');
+            s1.innerText = ''; s1.className = 'slot slot-consonant active';
+            s2.innerText = ''; s2.className = 'slot slot-vowel';
+            
+            updateGuide();
+            highlightTargetKey();
+        }
+
+        function updateGuide() {
+            const q = state.questions[state.currentIndex];
+            const target = q.romaji[state.currentStep];
+            const msgEl = document.getElementById('guide-msg');
+            msgEl.innerText = `「${target}」を うってみよう！`;
+        }
+
+        function highlightTargetKey() {
+            // 前回のヒントアニメーション用クラスを確実に削除
+            document.querySelectorAll('.key').forEach(k => k.classList.remove('target-consonant', 'target-vowel'));
+            if (!config.hint) return; // ヒントなしなら光らせない
+
+            const q = state.questions[state.currentIndex];
+            const target = q.romaji[state.currentStep];
+            const keyEl = document.getElementById(`key-${target}`);
+            if (keyEl) {
+                // 子音なら赤色のパルス、母音なら緑色のパルスを付与
+                if (state.currentStep === 0) {
+                    keyEl.classList.add('target-consonant');
+                } else {
+                    keyEl.classList.add('target-vowel');
+                }
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (!state.isPlaying) return;
+            const key = e.key.toUpperCase();
+            if (!/^[A-Z]$/.test(key)) return;
+
+            state.totalKeyStrokes++;
+
+            const keyEl = document.getElementById(`key-${key}`);
+            if (keyEl) {
+                keyEl.classList.add('active');
+                setTimeout(() => keyEl.classList.remove('active'), 100);
+            }
+
+            const q = state.questions[state.currentIndex];
+            const target = q.romaji[state.currentStep];
+
+            if (key === target) {
+                state.correctKeyStrokes++;
+                handleSuccess(key);
+            } else {
+                handleMiss(key);
+            }
+        });
+
+        function handleSuccess(key) {
+            playTone(440 + state.currentStep * 100, 'triangle');
+            const slot = document.getElementById(`slot-${state.currentStep + 1}`);
+            slot.innerText = key;
+            slot.classList.add('filled');
+            slot.classList.remove('active');
+
+            if (state.currentStep === 0) {
+                state.currentStep = 1;
+                document.getElementById('slot-2').classList.add('active');
+                updateGuide();
+                highlightTargetKey();
+            } else {
+                state.score += (config.hint ? 100 : 150) + (state.combo * 10);
+                state.combo++;
+                state.correctCount++;
+                state.currentIndex++;
+                updateUI();
+                showFloatingText('PERFECT!!', '#3b82f6');
+                
+                // ヒントありならゆったり、なしなら素早く
+                const waitTime = config.hint ? 1200 : 400;
+                setTimeout(nextQuestion, waitTime);
+            }
+        }
+
+        function handleMiss(key) {
+            playTone(150, 'sawtooth', 0.2);
+            state.combo = 0;
+            updateUI();
+            showFloatingText('どんまい！', '#ef4444');
+            
+            const q = state.questions[state.currentIndex];
+            const missKey = q.kana + '(' + q.romaji[state.currentStep] + ')';
+            state.mistakes[missKey] = (state.mistakes[missKey] || 0) + 1;
+        }
+
+        function updateUI() {
+            document.getElementById('score').innerText = state.score;
+            document.getElementById('combo').innerText = state.combo;
+            document.getElementById('combo-container').style.visibility = state.combo > 1 ? 'visible' : 'hidden';
+        }
+
+        function showFloatingText(text, color) {
+            const el = document.createElement('div');
+            el.className = 'floating-text';
+            el.innerText = text;
+            el.style.color = color;
+            el.style.left = '50%';
+            el.style.top = '40%';
+            el.style.transform = 'translateX(-50%)';
+            document.getElementById('game-screen').appendChild(el);
+            setTimeout(() => el.remove(), 800);
+        }
+
+        function endGame() {
+            state.isPlaying = false;
+            state.endTime = Date.now();
+            const timeTaken = Math.floor((state.endTime - state.startTime) / 1000);
+            const accuracy = state.totalKeyStrokes > 0 ? Math.floor((state.correctKeyStrokes / state.totalKeyStrokes) * 100) : 0;
+
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            
+            document.getElementById('final-score').innerText = state.score;
+            document.getElementById('final-count').innerText = state.correctCount;
+            document.getElementById('final-time').innerText = timeTaken;
+            document.getElementById('final-accuracy').innerText = accuracy;
+
+            const stats = document.getElementById('result-stats');
+            const missKeys = Object.keys(state.mistakes);
+            
+            if (missKeys.length > 0) {
+                stats.innerHTML = '<p class="font-bold text-gray-700 mb-3 text-lg">?? もういちど れんしゅう：</p>' + 
+                                 '<div class="flex flex-wrap">' +
+                                 missKeys.map(k => `<span class="inline-block bg-red-100 px-4 py-2 rounded-full m-1 text-red-600 font-bold border border-red-200">${k}</span>`).join('') +
+                                 '</div><p class="mt-4 text-sm text-gray-500">あわてなくても だいじょうぶ！ じぶんの ペースで うとう！</p>';
+                document.getElementById('feedback-text').innerText = "よく がんばったね！ つぎは もっと できるよ！";
+            } else {
+                stats.innerHTML = '<div class="text-center"><p class="text-2xl text-green-600 font-bold mb-2">?? パーフェクト！</p><p class="text-gray-600">ミスなしで クリア！ すばらしい 集中力（しゅうちゅうりょく）です！</p></div>';
+                document.getElementById('feedback-text').innerText = "きみは ローマじの 天才（てんさい）だ！";
+            }
+        }
+    </script>
+</body>
+</html>
