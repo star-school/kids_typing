@@ -2,17 +2,21 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>アルファベットクエスト</title>
     <style>
         :root {
             --primary: #3498db; --success: #2ecc71; --gold: #f1c40f; --miss: #e74c3c; --bg: #f8fbff;
-            /* 指使いカラー */
-            --f-pinky: #ff5e57;  /* 赤 */
-            --f-ring: #2ed573;   /* 緑 */
-            --f-middle: #48c1fb; /* 青 */
-            --f-index: #feb72b;  /* オレンジ */
-            --f-vowel-o: #a55eea; /* 紫（O用） */
+            
+            /* 添付画像に基づく 左右の指使いカラーパレット */
+            --f-pinky-l: #ff5e57;  /* 左手小指：赤 */
+            --f-ring-l: #f1c40f;   /* 左手薬指：黄色 */
+            --f-middle-l: #2ecc71; /* 左手中指：緑 */
+            --f-index-l: #00d2d3;  /* 左手人差し指：水色 */
+            --f-index-r: #3867d6;  /* 右手人差し指：青 */
+            --f-middle-r: #20bf6b; /* 右手中指：深緑 */
+            --f-ring-r: #ff9f43;   /* 右手薬指：オレンジ */
+            --f-pinky-r: #fd79a8;  /* 右手小指：濃いピンク */
         }
         body { 
             font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif; 
@@ -22,23 +26,30 @@
             align-items: center; 
             min-height: 100vh; 
             margin: 0; 
-            padding-bottom: 100px; /* ボタン用の余白 */
+            padding-bottom: 120px; /* ボタン用の余白 */
             overflow-x: hidden; 
+        }
+
+        /* スマートフォン向けタッチ最適化 */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            box-sizing: border-box;
         }
         
         /* タイトル・結果画面 */
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.98); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; }
-        .main-title { font-size: 42px; color: var(--primary); margin-bottom: 5px; font-weight: bold; }
-        .sub-title { font-size: 20px; color: #7f8c8d; margin-bottom: 30px; }
+        .main-title { font-size: clamp(28px, 8vw, 42px); color: var(--primary); margin-bottom: 5px; font-weight: bold; }
+        .sub-title { font-size: clamp(14px, 4vw, 20px); color: #7f8c8d; margin-bottom: 30px; }
         
         /* 設定エリア */
-        .settings-area { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; width: 320px; }
+        .settings-area { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; width: 90%; max-width: 320px; }
         .toggle-btn { padding: 12px 15px; font-size: 15px; border: 2px solid var(--primary); border-radius: 12px; background: white; color: var(--primary); cursor: pointer; transition: 0.2s; font-weight: bold; }
         .toggle-btn.off { border-color: #95a5a6; color: #95a5a6; }
 
         /* コレクションマップ */
         .collection-container { 
-            margin-top: 15px; padding: 20px; background: #d1d8e0; border-radius: 20px; 
+            margin-top: 15px; padding: 15px; background: #d1d8e0; border-radius: 20px; 
             width: 95%; max-width: 800px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.1); 
             text-align: center; transition: all 0.3s ease;
         }
@@ -46,50 +57,81 @@
         .collection-container.map-hidden { padding: 10px 20px; background: #e2e8f0; }
         .collection-container.map-hidden .collection-grid { display: none; }
 
-        .collection-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .collection-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .collection-container.map-hidden .collection-header { margin-bottom: 0; }
 
-        .layout-switch-btn { padding: 6px 12px; font-size: 12px; background: white; border: 1px solid #ccc; border-radius: 20px; cursor: pointer; font-weight: bold; color: #666; margin-left: 4px; }
+        .layout-switch-btn { padding: 6px 12px; font-size: 11px; background: white; border: 1px solid #ccc; border-radius: 20px; cursor: pointer; font-weight: bold; color: #666; margin-left: 4px; }
         .layout-switch-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-        .collection-grid { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .kbd-row { display: flex; gap: 6px; justify-content: center; width: 100%; }
+        .collection-grid { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }
+        .kbd-row { display: flex; gap: 4px; justify-content: center; width: 100%; }
 
-        /* キーのスロットスタイル */
+        /* キーのスロットスタイル (レスポンシブ幅) */
         .char-slot { 
-            width: 45px; height: 55px; background: white; border: 3px solid #ccc; border-radius: 8px;
+            width: 3.5vw; max-width: 45px; min-width: 21px;
+            height: 4.5vw; max-height: 55px; min-height: 28px;
+            background: white; border: 2.5px solid #ccc; border-radius: 6px;
             display: flex; justify-content: center; align-items: center;
-            font-weight: bold; color: #333; font-size: 18px; transition: all 0.3s;
+            font-weight: bold; color: #333; font-size: clamp(10px, 1.8vw, 18px); 
+            transition: all 0.2s;
+            user-select: none;
         }
 
-        .border-pinky  { border-color: var(--f-pinky); }
-        .border-ring   { border-color: var(--f-ring); }
-        .border-middle { border-color: var(--f-middle); }
-        .border-index  { border-color: var(--f-index); }
+        /* 左右別の指に対応した枠線カラー */
+        .border-l-pinky  { border-color: var(--f-pinky-l); }
+        .border-l-ring   { border-color: var(--f-ring-l); }
+        .border-l-middle { border-color: var(--f-middle-l); }
+        .border-l-index  { border-color: var(--f-index-l); }
+        .border-r-index  { border-color: var(--f-index-r); }
+        .border-r-middle { border-color: var(--f-middle-r); }
+        .border-r-ring   { border-color: var(--f-ring-r); }
+        .border-r-pinky  { border-color: var(--f-pinky-r); }
 
-        .char-slot.active.fill-a { background: var(--f-pinky) !important; color: white; }
-        .char-slot.active.fill-e { background: var(--f-ring) !important; color: white; }
-        .char-slot.active.fill-u { background: var(--f-index) !important; color: white; }
-        .char-slot.active.fill-i { background: var(--f-middle) !important; color: white; }
-        .char-slot.active.fill-o { background: var(--f-vowel-o) !important; color: white; }
+        /* 母音クリア時の完全な連動塗りつぶしカラー */
+        .char-slot.active.fill-a { background: var(--f-pinky-l) !important; color: white; border-color: var(--f-pinky-l); }
+        .char-slot.active.fill-e { background: var(--f-middle-l) !important; color: white; border-color: var(--f-middle-l); }
+        .char-slot.active.fill-i { background: var(--f-middle-r) !important; color: white; border-color: var(--f-middle-r); }
+        .char-slot.active.fill-o { background: var(--f-ring-r) !important; color: white; border-color: var(--f-ring-r); }
+        .char-slot.active.fill-u { background: var(--f-index-r) !important; color: white; border-color: var(--f-index-r); }
         
-        .char-slot.active:not([class*="fill-"]) { background: var(--gold); color: white; border-color: #f39c12; transform: scale(1.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        /* その他の通常クリア状態（ゴールド） */
+        .char-slot.active:not([class*="fill-"]) { background: var(--gold); color: white; border-color: #f39c12; transform: scale(1.08); box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
 
-        #status-msg { font-size: 18px; font-weight: bold; color: #7f8c8d; height: 24px; margin: 15px 0; }
+        #status-msg { font-size: clamp(16px, 4vw, 20px); font-weight: bold; color: #7f8c8d; height: 24px; margin: 20px 0; text-align: center; }
 
         /* ゲームボード */
         .game-board { display: flex; justify-content: center; gap: 40px; padding: 25px; background: white; border-radius: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); width: 90%; max-width: 550px; }
         .column { display: flex; flex-direction: column; gap: 12px; }
+        
+        /* ドラッグ/タップ用アルファベットカード */
         .draggable { 
             width: 85px; height: 95px; background: var(--primary); color: white; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
             border-radius: 12px; cursor: grab; box-shadow: 0 5px 0 #2980b9; 
+            transition: transform 0.2s, box-shadow 0.2s;
+            user-select: none;
         }
         .draggable:active { transform: translateY(4px); box-shadow: none; }
+        
+        /* タブレット・スマホ用の選択中スタイル */
+        .draggable.selected {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 0 0 4px var(--primary), 0 10px 20px rgba(52, 152, 219, 0.4);
+            z-index: 10;
+        }
+
         .main-char { font-size: 40px; font-weight: bold; line-height: 1; }
         .reading-char { font-size: 14px; margin-top: 4px; font-weight: normal; opacity: 0.9; }
 
-        .dropzone { width: 100px; height: 90px; border: 2px dashed #cbd5e0; display: flex; justify-content: center; align-items: center; font-size: 46px; font-weight: bold; color: #cbd5e0; border-radius: 15px; }
+        /* ドロップゾーン */
+        .dropzone { 
+            width: 100px; height: 90px; border: 2.5px dashed #cbd5e0; 
+            display: flex; justify-content: center; align-items: center; 
+            font-size: 46px; font-weight: bold; color: #cbd5e0; border-radius: 15px; 
+            transition: all 0.2s;
+            cursor: pointer;
+            user-select: none;
+        }
         .dropzone.success { border-style: solid; border-color: var(--success); color: var(--success); background: #eafaf1; animation: pop 0.3s; }
 
         @keyframes pop { 50% { transform: scale(1.2); } }
@@ -97,7 +139,7 @@
         .btn { padding: 15px 40px; font-size: 20px; cursor: pointer; border-radius: 50px; border: none; background: var(--primary); color: white; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: 0.3s; }
         .btn:hover { transform: scale(1.05); }
 
-        /* つぎのステージへボタン（強化版） */
+        /* つぎのステージへボタン（強化フローティング版） */
         #nextBtn { 
             position: fixed; 
             bottom: 30px; 
@@ -107,10 +149,11 @@
             background: linear-gradient(135deg, var(--gold), #f39c12); 
             box-shadow: 0 10px 25px rgba(243, 156, 18, 0.4); 
             font-size: 24px;
-            padding: 20px 60px;
+            padding: 18px 50px;
             visibility: hidden;
             opacity: 0;
             transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            white-space: nowrap;
         }
         #nextBtn.show {
             visibility: visible;
@@ -120,6 +163,32 @@
 
         .stats-card { background: #fff; padding: 20px; border-radius: 20px; border: 2px solid #eee; margin: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); width: 85%; max-width: 400px; }
         .stat-detail { text-align: left; font-size: 16px; color: #555; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
+
+        /* スマホ用レイアウト調整 */
+        @media (max-width: 600px) {
+            .char-slot {
+                border-width: 1.5px;
+                border-radius: 4px;
+            }
+            .collection-container {
+                padding: 10px 5px;
+            }
+            .game-board {
+                gap: 15px;
+                padding: 15px;
+            }
+            .draggable {
+                width: 72px; height: 82px;
+                box-shadow: 0 4px 0 #2980b9;
+            }
+            .draggable:active { transform: translateY(3px); }
+            .main-char { font-size: 32px; }
+            .reading-char { font-size: 11px; }
+            .dropzone {
+                width: 85px; height: 80px;
+                font-size: 36px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -153,8 +222,8 @@
         <div class="column" id="targets"></div>
     </div>
 
-    <!-- 常に押しやすい場所に表示されるボタン -->
-    <button class="btn" id="nextBtn" onclick="startRound()">つぎの ステージへ！ ?</button>
+    <!-- 常にタップしやすい場所に表示されるボタン -->
+    <button class="btn" id="nextBtn" onclick="startRound()">つぎの ステージへ！ ➔</button>
 
     <div id="result-screen" class="overlay" style="display:none;">
         <div id="result-content"></div>
@@ -162,16 +231,34 @@
     </div>
 
     <script>
+        // 画像（image_161cea.png）のホームポジション色に合わせた指使い設定
         const charData = {
-            'A': {read:'えー', type:'trans', finger:'pinky', fill:'fill-a'}, 'B': {read:'びー', type:'trans', finger:'index'}, 'C': {read:'しー', type:'parent', finger:'middle'},
-            'D': {read:'でー', type:'trans', finger:'middle'}, 'E': {read:'いー', type:'trans', finger:'ring', fill:'fill-e'}, 'F': {read:'えふ', type:'trans', finger:'index'},
-            'G': {read:'じー', type:'trans', finger:'index'}, 'H': {read:'えいち', type:'trans', finger:'index'}, 'I': {read:'あい', type:'trans', finger:'middle', fill:'fill-i'},
-            'J': {read:'じぇー', type:'parent', finger:'index'}, 'K': {read:'けー', type:'parent', finger:'middle'}, 'L': {read:'える', type:'trans', finger:'ring'},
-            'M': {read:'えむ', type:'parent', finger:'index'}, 'N': {read:'えぬ', type:'trans', finger:'index'}, 'O': {read:'おー', type:'parent', finger:'ring', fill:'fill-o'},
-            'P': {read:'ぴー', type:'parent', finger:'pinky'}, 'Q': {read:'きゅー', type:'trans', finger:'pinky'}, 'R': {read:'あーる', type:'trans', finger:'index'},
-            'S': {read:'えす', type:'parent', finger:'ring'}, 'T': {read:'てぃー', type:'trans', finger:'index'}, 'U': {read:'ゆー', type:'parent', finger:'index', fill:'fill-u'},
-            'V': {read:'ぶい', type:'parent', finger:'index'}, 'W': {read:'だぶりゅー', type:'parent', finger:'ring'}, 'X': {read:'えっくす', type:'parent', finger:'ring'},
-            'Y': {read:'わい', type:'trans', finger:'index'}, 'Z': {read:'ぜっと', type:'parent', finger:'pinky'}
+            'A': {read:'えー', type:'trans', finger:'l-pinky', fill:'fill-a'}, 
+            'B': {read:'びー', type:'trans', finger:'l-index'}, 
+            'C': {read:'しー', type:'parent', finger:'l-middle'},
+            'D': {read:'でー', type:'trans', finger:'l-middle'}, 
+            'E': {read:'いー', type:'trans', finger:'l-middle', fill:'fill-e'}, 
+            'F': {read:'えふ', type:'trans', finger:'l-index'},
+            'G': {read:'じー', type:'trans', finger:'l-index'}, 
+            'H': {read:'えいち', type:'trans', finger:'r-index'}, 
+            'I': {read:'あい', type:'trans', finger:'r-middle', fill:'fill-i'},
+            'J': {read:'じぇー', type:'parent', finger:'r-index'}, 
+            'K': {read:'けー', type:'parent', finger:'r-middle'}, 
+            'L': {read:'える', type:'trans', finger:'r-ring'},
+            'M': {read:'えむ', type:'parent', finger:'r-index'}, 
+            'N': {read:'えぬ', type:'trans', finger:'r-index'}, 
+            'O': {read:'おー', type:'parent', finger:'r-ring', fill:'fill-o'},
+            'P': {read:'ぴー', type:'parent', finger:'r-pinky'}, 
+            'Q': {read:'きゅー', type:'trans', finger:'l-pinky'}, 
+            'R': {read:'あーる', type:'trans', finger:'l-index'},
+            'S': {read:'えす', type:'parent', finger:'l-ring'}, 
+            'T': {read:'てぃー', type:'trans', finger:'l-index'}, 
+            'U': {read:'ゆー', type:'parent', finger:'r-index', fill:'fill-u'},
+            'V': {read:'ぶい', type:'parent', finger:'l-index'}, 
+            'W': {read:'だぶりゅー', type:'parent', finger:'l-ring'}, 
+            'X': {read:'えっくす', type:'parent', finger:'l-ring'},
+            'Y': {read:'わい', type:'trans', finger:'r-index'}, 
+            'Z': {read:'ぜっと', type:'parent', finger:'l-pinky'}
         };
 
         const kbdRows = [
@@ -182,6 +269,16 @@
 
         let audioCtx, cleared = new Set(), startTime, roundSolved = 0;
         let parentMisses = 0, transMisses = 0, isSoundEnabled = true, voiceMode = 'ja', currentLayout = 'abc';
+        
+        // 2タップ選択用のステート
+        let selectedChar = null;
+        let selectedElement = null;
+
+        // タッチドラッグ移動用のステート
+        let activeDragEl = null;
+        let touchStartX = 0, touchStartY = 0;
+        let elStartX = 0, elStartY = 0;
+
         const alpha = Object.keys(charData);
 
         function toggleSoundMaster() {
@@ -199,7 +296,6 @@
             currentLayout = layout;
             const container = document.getElementById('collectionContainer');
             
-            // ボタンの活性状態の更新
             document.getElementById('layoutHideBtn').classList.toggle('active', layout === 'hide');
             document.getElementById('layoutAbcBtn').classList.toggle('active', layout === 'abc');
             document.getElementById('layoutKbdBtn').classList.toggle('active', layout === 'keyboard');
@@ -272,61 +368,248 @@
         }
 
         function initGame() {
+            // モバイル音声再生用アンロック（ダミー無音）
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const buffer = audioCtx.createBuffer(1, 1, 22050);
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioCtx.destination);
+            source.start(0);
+
+            // SpeechSynthesisアンロック
+            if ('speechSynthesis' in window) {
+                const u = new SpeechSynthesisUtterance('');
+                u.volume = 0;
+                window.speechSynthesis.speak(u);
+            }
+
             document.getElementById('start-screen').style.display = 'none';
-            startTime = Date.now(); renderCollectionMap(); startRound();
+            startTime = Date.now(); 
+            renderCollectionMap(); 
+            startRound();
+        }
+
+        // 大文字を選択（タップ）したときのロジック
+        function selectCharCard(el, char) {
+            if (selectedElement) {
+                selectedElement.classList.remove('selected');
+            }
+            
+            if (selectedElement === el) {
+                // すでに選択されてるカードを再度タップしたらキャンセル
+                selectedElement = null;
+                selectedChar = null;
+                document.getElementById('status-msg').textContent = "おおもじ を えらんでね！";
+                document.getElementById('status-msg').style.color = "#7f8c8d";
+            } else {
+                selectedElement = el;
+                selectedChar = char;
+                el.classList.add('selected');
+                document.getElementById('status-msg').textContent = `「${char}」を どこに はこぶ？`;
+                document.getElementById('status-msg').style.color = "var(--primary)";
+            }
+        }
+
+        // ペア判定の統合メインロジック
+        function attemptMatch(droppedChar, zone, cardElement) {
+            const targetChar = zone.dataset.char;
+            if (droppedChar === targetChar && !zone.classList.contains('success')) {
+                zone.classList.add('success'); 
+                zone.textContent = targetChar + targetChar.toLowerCase();
+                cardElement.style.visibility = 'hidden';
+                
+                // 選択を初期化
+                if (selectedElement === cardElement) {
+                    selectedElement.classList.remove('selected');
+                    selectedElement = null;
+                    selectedChar = null;
+                }
+                
+                cleared.add(targetChar); 
+                renderCollectionMap();
+                roundSolved++; 
+                sfx.ok(); 
+                
+                speak(targetChar).then(() => {
+                    const remaining = alpha.filter(c => !cleared.has(c));
+                    if(cleared.size === 26) {
+                        setTimeout(showResult, 500);
+                    } else if(roundSolved === 5 || remaining.length <= 5) { 
+                        document.getElementById('status-msg').textContent = "すばらしい！"; 
+                        document.getElementById('nextBtn').classList.add('show'); 
+                        sfx.clear();
+                    } else {
+                        document.getElementById('status-msg').textContent = "おおもじ を はこぼう！";
+                        document.getElementById('status-msg').style.color = "#7f8c8d";
+                    }
+                });
+            } else if (droppedChar !== targetChar) {
+                if(charData[targetChar].type === 'parent') parentMisses++; else transMisses++;
+                sfx.ng(); 
+                document.getElementById('status-msg').textContent = "ちがう みたい！"; 
+                document.getElementById('status-msg').style.color = "var(--miss)";
+                
+                // ミスしたときに一時的に揺らすアニメーション
+                if (cardElement) {
+                    cardElement.classList.remove('selected');
+                    if (selectedElement === cardElement) {
+                        selectedElement = null;
+                        selectedChar = null;
+                    }
+                }
+            }
         }
 
         function startRound() {
             const src = document.getElementById('sources'), tgt = document.getElementById('targets');
             const nextBtn = document.getElementById('nextBtn');
             src.innerHTML = ""; tgt.innerHTML = "";
-            nextBtn.classList.remove('show'); // ボタンを隠す
+            nextBtn.classList.remove('show');
+            document.getElementById('status-msg').textContent = "おおもじ を はこぼう！";
+            document.getElementById('status-msg').style.color = "#7f8c8d";
             
+            selectedChar = null;
+            selectedElement = null;
             roundSolved = 0;
+            
             const remaining = alpha.filter(c => !cleared.has(c));
             if (remaining.length === 0) return showResult();
             
             const current = remaining.sort(() => Math.random() - 0.5).slice(0, 5);
             
+            // 左列：大文字カードの生成
             current.sort(() => Math.random() - 0.5).forEach(c => {
                 const d = document.createElement('div');
-                d.className = 'draggable'; d.draggable = true;
+                d.className = 'draggable'; 
+                d.draggable = true;
                 d.innerHTML = `<span class="main-char">${c}</span><span class="reading-char">${charData[c].read}</span>`;
+                
+                // --- PC用：ドラッグ＆ドロップイベント ---
                 d.addEventListener('dragstart', (e) => { 
                     e.dataTransfer.setData('text', c); 
-                    document.getElementById('status-msg').textContent = "おおもじ を はこぼう！"; 
-                    document.getElementById('status-msg').style.color = "#7f8c8d"; 
+                    selectCharCard(d, c);
                 });
+
+                // --- モバイル・タブレット用：タップ選択イベント ---
+                d.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    selectCharCard(d, c);
+                });
+
+                // --- モバイル・タブレット用：タッチドラッグ移動イベント ---
+                d.addEventListener('touchstart', (e) => {
+                    if (e.touches.length > 1) return;
+                    // 標準のスクロールを抑制してなめらかに移動できるようにする
+                    e.preventDefault();
+                    
+                    selectCharCard(d, c);
+                    activeDragEl = d;
+                    const touch = e.touches[0];
+                    touchStartX = touch.clientX;
+                    touchStartY = touch.clientY;
+                    
+                    const rect = d.getBoundingClientRect();
+                    elStartX = rect.left;
+                    elStartY = rect.top;
+                    
+                    // タッチ用の一時的 absolute 配置スタイル
+                    d.style.position = 'fixed';
+                    d.style.left = `${elStartX}px`;
+                    d.style.top = `${elStartY}px`;
+                    d.style.zIndex = '1000';
+                    d.style.pointerEvents = 'none'; // 重なりの下にあるdropzoneを検知できるようにする
+                    d.style.width = `${rect.width}px`;
+                    d.style.height = `${rect.height}px`;
+                    d.style.transform = 'scale(1.1)';
+                }, { passive: false });
+
                 src.appendChild(d);
             });
 
+            // 右列：小文字ドロップエリアの生成
             [...current].sort(() => Math.random() - 0.5).forEach(c => {
                 const z = document.createElement('div');
-                z.className = 'dropzone'; z.textContent = c.toLowerCase();
+                z.className = 'dropzone'; 
+                z.textContent = c.toLowerCase();
+                z.dataset.char = c; // 正解の大文字を保持
+
+                // --- PC用：ドロップイベント ---
                 z.addEventListener('dragover', e => e.preventDefault());
                 z.addEventListener('drop', e => {
+                    e.preventDefault();
                     const dropped = e.dataTransfer.getData('text');
-                    if(dropped === c && !z.classList.contains('success')) {
-                        z.classList.add('success'); z.textContent = c + c.toLowerCase();
-                        document.querySelectorAll('.draggable').forEach(el => { if(el.querySelector('.main-char').textContent === c) el.style.visibility = 'hidden'; });
-                        cleared.add(c); renderCollectionMap();
-                        roundSolved++; sfx.ok(); speak(c).then(() => {
-                            if(cleared.size === 26) {
-                                setTimeout(showResult, 500);
-                            } else if(roundSolved === 5 || remaining.length <= 5) { 
-                                document.getElementById('status-msg').textContent = "すばらしい！"; 
-                                nextBtn.classList.add('show'); // ここでボタンを表示
-                                sfx.clear();
-                            }
-                        });
-                    } else if(dropped !== c) { 
-                        if(charData[c].type === 'parent') parentMisses++; else transMisses++;
-                        sfx.ng(); document.getElementById('status-msg').textContent = "ちがう みたい！"; document.getElementById('status-msg').style.color = "var(--miss)";
+                    const dragCard = Array.from(document.querySelectorAll('.draggable')).find(el => el.querySelector('.main-char').textContent === dropped);
+                    attemptMatch(dropped, z, dragCard);
+                });
+
+                // --- モバイル・タブレット用：タップ配置イベント ---
+                z.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (selectedChar) {
+                        attemptMatch(selectedChar, z, selectedElement);
+                    } else {
+                        document.getElementById('status-msg').textContent = "さきに おおもじ を えらんでね！";
+                        document.getElementById('status-msg').style.color = "var(--miss)";
                     }
                 });
+
                 tgt.appendChild(z);
             });
+
+            // グローバルなタッチ移動・終了監視をセット
+            window.addEventListener('touchmove', handleWindowTouchMove, { passive: false });
+            window.addEventListener('touchend', handleWindowTouchEnd, { passive: false });
+        }
+
+        // 画面全体のタッチ移動イベントハンドラ
+        function handleWindowTouchMove(e) {
+            if (!activeDragEl) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const dx = touch.clientX - touchStartX;
+            const dy = touch.clientY - touchStartY;
+            
+            activeDragEl.style.left = `${elStartX + dx}px`;
+            activeDragEl.style.top = `${elStartY + dy}px`;
+        }
+
+        // 画面全体のタッチ終了イベントハンドラ
+        function handleWindowTouchEnd(e) {
+            if (!activeDragEl) return;
+            e.preventDefault();
+            
+            const touch = e.changedTouches[0];
+            // 指を離した位置にあるドロップターゲットを特定
+            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+            let zone = null;
+            if (dropTarget) {
+                zone = dropTarget.closest('.dropzone');
+            }
+            
+            // スタイルをリセット
+            activeDragEl.style.position = '';
+            activeDragEl.style.left = '';
+            activeDragEl.style.top = '';
+            activeDragEl.style.zIndex = '';
+            activeDragEl.style.pointerEvents = '';
+            activeDragEl.style.width = '';
+            activeDragEl.style.height = '';
+            activeDragEl.style.transform = '';
+            
+            const cardEl = activeDragEl;
+            const char = selectedChar;
+            activeDragEl = null;
+            
+            if (zone) {
+                attemptMatch(char, zone, cardEl);
+            }
+            
+            // リスナー解除
+            window.removeEventListener('touchmove', handleWindowTouchMove);
+            window.removeEventListener('touchend', handleWindowTouchEnd);
         }
 
         function showResult() {
