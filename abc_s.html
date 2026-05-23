@@ -26,7 +26,7 @@
             align-items: center; 
             min-height: 100vh; 
             margin: 0; 
-            padding-bottom: 120px; /* ボタン用の余白 */
+            padding-bottom: 40px; 
             overflow-x: hidden; 
         }
 
@@ -66,7 +66,7 @@
         .collection-grid { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }
         .kbd-row { display: flex; gap: 4px; justify-content: center; width: 100%; }
 
-        /* キーのスロットスタイル (レスポンシブ幅) */
+        /* キーのスロットスタイル (QWERTY比率考慮のサイズ) */
         .char-slot { 
             width: 3.5vw; max-width: 45px; min-width: 21px;
             height: 4.5vw; max-height: 55px; min-height: 28px;
@@ -97,15 +97,66 @@
         /* その他の通常クリア状態（ゴールド） */
         .char-slot.active:not([class*="fill-"]) { background: var(--gold); color: white; border-color: #f39c12; transform: scale(1.08); box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
 
-        #status-msg { font-size: clamp(16px, 4vw, 20px); font-weight: bold; color: #7f8c8d; height: 24px; margin: 20px 0; text-align: center; }
+        #status-msg { font-size: clamp(16px, 4vw, 20px); font-weight: bold; color: #7f8c8d; height: 24px; margin: 15px 0 10px 0; text-align: center; }
 
-        /* ゲームボード */
-        .game-board { display: flex; justify-content: center; gap: 40px; padding: 25px; background: white; border-radius: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.05); width: 90%; max-width: 550px; }
-        .column { display: flex; flex-direction: column; gap: 12px; }
+        /* ゲームボード（上下2列のレスポンシブな折り返しレイアウト） */
+        .game-board { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            padding: 20px; 
+            background: white; 
+            border-radius: 25px; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.05); 
+            width: 95%; 
+            max-width: 620px; 
+            align-items: center;
+        }
+        
+        /* カードが横に並び、はみ出ると自動的に2列、3列に回り込むコンテナ */
+        .card-container { 
+            display: flex; 
+            flex-direction: row; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 12px; 
+            width: 100%; 
+        }
+
+        /* ➔ 改良！矢印ガイド付きの仕切り線コンテナ */
+        .board-divider-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+            margin: 5px 0;
+            user-select: none;
+        }
+        
+        .board-arrow-text {
+            font-size: 13px;
+            font-weight: bold;
+            color: #bdc3c7;
+            letter-spacing: 1px;
+        }
+
+        .board-arrow {
+            font-size: 16px;
+            color: var(--primary);
+            display: inline-block;
+            animation: bounceUp 1.5s infinite ease-in-out;
+        }
+
+        /* 矢印が上にふわふわ跳ねるアニメーション */
+        @keyframes bounceUp {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
         
         /* ドラッグ/タップ用アルファベットカード */
         .draggable { 
-            width: 85px; height: 95px; background: var(--primary); color: white; 
+            width: 82px; height: 90px; background: var(--primary); color: white; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
             border-radius: 12px; cursor: grab; box-shadow: 0 5px 0 #2980b9; 
             transition: transform 0.2s, box-shadow 0.2s;
@@ -120,51 +171,61 @@
             z-index: 10;
         }
 
-        .main-char { font-size: 40px; font-weight: bold; line-height: 1; }
-        .reading-char { font-size: 14px; margin-top: 4px; font-weight: normal; opacity: 0.9; }
+        .main-char { font-size: 38px; font-weight: bold; line-height: 1; }
+        .reading-char { font-size: 13px; margin-top: 4px; font-weight: normal; opacity: 0.9; }
 
         /* ドロップゾーン */
         .dropzone { 
-            width: 100px; height: 90px; border: 2.5px dashed #cbd5e0; 
+            width: 88px; height: 80px; border: 2.5px dashed #cbd5e0; 
             display: flex; justify-content: center; align-items: center; 
-            font-size: 46px; font-weight: bold; color: #cbd5e0; border-radius: 15px; 
+            font-size: 40px; font-weight: bold; color: #cbd5e0; border-radius: 15px; 
             transition: all 0.2s;
             cursor: pointer;
             user-select: none;
         }
         .dropzone.success { border-style: solid; border-color: var(--success); color: var(--success); background: #eafaf1; animation: pop 0.3s; }
 
-        @keyframes pop { 50% { transform: scale(1.2); } }
+        @keyframes pop { 50% { transform: scale(1.15); } }
         
         .btn { padding: 15px 40px; font-size: 20px; cursor: pointer; border-radius: 50px; border: none; background: var(--primary); color: white; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: 0.3s; }
         .btn:hover { transform: scale(1.05); }
 
-        /* つぎのステージへボタン（強化フローティング版） */
+        /* つぎのステージへボタン（画面中央にポップアップ配置） */
         #nextBtn { 
             position: fixed; 
-            bottom: 30px; 
+            top: 50%; 
             left: 50%; 
-            transform: translateX(-50%) translateY(100px); 
-            z-index: 500; 
+            transform: translate(-50%, -50%) scale(0.5); 
+            z-index: 600; 
             background: linear-gradient(135deg, var(--gold), #f39c12); 
-            box-shadow: 0 10px 25px rgba(243, 156, 18, 0.4); 
-            font-size: 24px;
-            padding: 18px 50px;
+            box-shadow: 0 15px 35px rgba(243, 156, 18, 0.5), 0 0 0 10px rgba(255, 255, 255, 0.8); 
+            font-size: clamp(20px, 5vw, 28px);
+            padding: 22px 50px;
+            border-radius: 60px;
+            border: 4px solid white;
             visibility: hidden;
             opacity: 0;
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             white-space: nowrap;
         }
         #nextBtn.show {
             visibility: visible;
             opacity: 1;
-            transform: translateX(-50%) translateY(0);
+            transform: translate(-50%, -50%) scale(1);
+            animation: pulse-gold 2s infinite;
+        }
+
+        /* ボタンの周囲がゆっくり波打つアニメーション */
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 15px 35px rgba(243, 156, 18, 0.5), 0 0 0 0px rgba(243, 156, 18, 0.4); }
+            70% { box-shadow: 0 15px 35px rgba(243, 156, 18, 0.5), 0 0 0 20px rgba(243, 156, 18, 0); }
+            100% { box-shadow: 0 15px 35px rgba(243, 156, 18, 0.5), 0 0 0 0px rgba(243, 156, 18, 0); }
         }
 
         .stats-card { background: #fff; padding: 20px; border-radius: 20px; border: 2px solid #eee; margin: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); width: 85%; max-width: 400px; }
         .stat-detail { text-align: left; font-size: 16px; color: #555; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
 
-        /* スマホ用レイアウト調整 */
+        /* スマホ・極小画面用レイアウト調整 */
         @media (max-width: 600px) {
             .char-slot {
                 border-width: 1.5px;
@@ -174,19 +235,34 @@
                 padding: 10px 5px;
             }
             .game-board {
-                gap: 15px;
-                padding: 15px;
+                gap: 10px;
+                padding: 12px;
+            }
+            .card-container {
+                gap: 8px;
             }
             .draggable {
-                width: 72px; height: 82px;
+                width: 64px; height: 72px;
                 box-shadow: 0 4px 0 #2980b9;
+                border-radius: 10px;
             }
             .draggable:active { transform: translateY(3px); }
-            .main-char { font-size: 32px; }
-            .reading-char { font-size: 11px; }
+            .main-char { font-size: 28px; }
+            .reading-char { font-size: 10px; }
             .dropzone {
-                width: 85px; height: 80px;
-                font-size: 36px;
+                width: 68px; height: 64px;
+                font-size: 30px;
+                border-radius: 10px;
+                border-width: 2px;
+            }
+            .board-divider-container {
+                margin: 2px 0;
+            }
+            .board-arrow-text {
+                font-size: 11px;
+            }
+            .board-arrow {
+                font-size: 13px;
             }
         }
     </style>
@@ -215,19 +291,30 @@
         <div class="collection-grid" id="collectionGrid"></div>
     </div>
 
-    <div id="status-msg">おおもじ を はこぼう！</div>
+    <div id="status-msg">おおもじ を うえに はこぼう！</div>
 
+    <!-- 上下グリッド式のゲームボード (大文字を下、小文字を上に入れ替え) -->
     <div class="game-board">
-        <div class="column" id="sources"></div>
-        <div class="column" id="targets"></div>
+        <!-- 上段：小文字枠 -->
+        <div class="card-container" id="targets"></div>
+        
+        <!-- 中央：上向き矢印ガイド -->
+        <div class="board-divider-container">
+            <span class="board-arrow">▲</span>
+            <span class="board-arrow-text">うえに はこぼう！</span>
+            <span class="board-arrow">▲</span>
+        </div>
+        
+        <!-- 下段：大文字カード -->
+        <div class="card-container" id="sources"></div>
     </div>
 
-    <!-- 常にタップしやすい場所に表示されるボタン -->
+    <!-- 画面中央付近に表示される、押しやすいつぎのステージボタン -->
     <button class="btn" id="nextBtn" onclick="startRound()">つぎの ステージへ！ ➔</button>
 
     <div id="result-screen" class="overlay" style="display:none;">
         <div id="result-content"></div>
-        <button class="btn" onclick="location.reload()">もういちど あそぶ</button>
+        <button class="btn" onclick="resetGame()">もういちど あそぶ</button>
     </div>
 
     <script>
@@ -270,6 +357,9 @@
         let audioCtx, cleared = new Set(), startTime, roundSolved = 0;
         let parentMisses = 0, transMisses = 0, isSoundEnabled = true, voiceMode = 'ja', currentLayout = 'abc';
         
+        // バグ防止：現在ステージの総問題数を記憶する変数
+        let currentRoundLength = 0;
+
         // 2タップ選択用のステート
         let selectedChar = null;
         let selectedElement = null;
@@ -386,6 +476,21 @@
                 window.speechSynthesis.speak(u);
             }
 
+            // 画面全体へのタッチ監視用グローバルイベントリスナーを設定
+            window.addEventListener('touchmove', handleWindowTouchMove, { passive: false });
+            window.addEventListener('touchend', handleWindowTouchEnd, { passive: false });
+
+            // どこでもない場所をタップしたら選択をリセットするイベント
+            document.body.addEventListener('click', (e) => {
+                if (!e.target.closest('.draggable') && !e.target.closest('.dropzone') && selectedElement) {
+                    selectedElement.classList.remove('selected');
+                    selectedElement = null;
+                    selectedChar = null;
+                    document.getElementById('status-msg').textContent = "おおもじ を えらんでね！";
+                    document.getElementById('status-msg').style.color = "#7f8c8d";
+                }
+            });
+
             document.getElementById('start-screen').style.display = 'none';
             startTime = Date.now(); 
             renderCollectionMap(); 
@@ -408,12 +513,12 @@
                 selectedElement = el;
                 selectedChar = char;
                 el.classList.add('selected');
-                document.getElementById('status-msg').textContent = `「${char}」を どこに はこぶ？`;
+                document.getElementById('status-msg').textContent = `「${char}」を うえに はこぼう！`;
                 document.getElementById('status-msg').style.color = "var(--primary)";
             }
         }
 
-        // ペア判定の統合メインロジック
+        // ペア判定
         function attemptMatch(droppedChar, zone, cardElement) {
             const targetChar = zone.dataset.char;
             if (droppedChar === targetChar && !zone.classList.contains('success')) {
@@ -434,15 +539,14 @@
                 sfx.ok(); 
                 
                 speak(targetChar).then(() => {
-                    const remaining = alpha.filter(c => !cleared.has(c));
                     if(cleared.size === 26) {
                         setTimeout(showResult, 500);
-                    } else if(roundSolved === 5 || remaining.length <= 5) { 
+                    } else if(roundSolved === currentRoundLength) { 
                         document.getElementById('status-msg').textContent = "すばらしい！"; 
-                        document.getElementById('nextBtn').classList.add('show'); 
+                        document.getElementById('nextBtn').classList.add('show'); // 画面の上下中央に大きなボタンを表示
                         sfx.clear();
                     } else {
-                        document.getElementById('status-msg').textContent = "おおもじ を はこぼう！";
+                        document.getElementById('status-msg').textContent = "おおもじ を うえに はこぼう！";
                         document.getElementById('status-msg').style.color = "#7f8c8d";
                     }
                 });
@@ -452,7 +556,7 @@
                 document.getElementById('status-msg').textContent = "ちがう みたい！"; 
                 document.getElementById('status-msg').style.color = "var(--miss)";
                 
-                // ミスしたときに一時的に揺らすアニメーション
+                // ミスしたときに一時的に選択を解除
                 if (cardElement) {
                     cardElement.classList.remove('selected');
                     if (selectedElement === cardElement) {
@@ -463,12 +567,25 @@
             }
         }
 
+        // もういちど遊ぶときの安全な内部状態リセット処理
+        function resetGame() {
+            document.getElementById('result-screen').style.display = 'none';
+            cleared.clear();
+            parentMisses = 0;
+            transMisses = 0;
+            roundSolved = 0;
+            startTime = Date.now();
+            
+            renderCollectionMap();
+            startRound();
+        }
+
         function startRound() {
             const src = document.getElementById('sources'), tgt = document.getElementById('targets');
             const nextBtn = document.getElementById('nextBtn');
             src.innerHTML = ""; tgt.innerHTML = "";
             nextBtn.classList.remove('show');
-            document.getElementById('status-msg').textContent = "おおもじ を はこぼう！";
+            document.getElementById('status-msg').textContent = "おおもじ を うえに はこぼう！";
             document.getElementById('status-msg').style.color = "#7f8c8d";
             
             selectedChar = null;
@@ -480,7 +597,10 @@
             
             const current = remaining.sort(() => Math.random() - 0.5).slice(0, 5);
             
-            // 左列：大文字カードの生成
+            // 現在のステージの問題数を正しくセット（最後の端数でも正しく動作）
+            currentRoundLength = current.length;
+            
+            // 下段：大文字カードの生成
             current.sort(() => Math.random() - 0.5).forEach(c => {
                 const d = document.createElement('div');
                 d.className = 'draggable'; 
@@ -495,6 +615,7 @@
 
                 // --- モバイル・タブレット用：タップ選択イベント ---
                 d.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     e.preventDefault();
                     selectCharCard(d, c);
                 });
@@ -502,7 +623,7 @@
                 // --- モバイル・タブレット用：タッチドラッグ移動イベント ---
                 d.addEventListener('touchstart', (e) => {
                     if (e.touches.length > 1) return;
-                    // 標準のスクロールを抑制してなめらかに移動できるようにする
+                    e.stopPropagation();
                     e.preventDefault();
                     
                     selectCharCard(d, c);
@@ -529,7 +650,7 @@
                 src.appendChild(d);
             });
 
-            // 右列：小文字ドロップエリアの生成
+            // 上段：小文字ドロップエリアの生成
             [...current].sort(() => Math.random() - 0.5).forEach(c => {
                 const z = document.createElement('div');
                 z.className = 'dropzone'; 
@@ -547,6 +668,7 @@
 
                 // --- モバイル・タブレット用：タップ配置イベント ---
                 z.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     e.preventDefault();
                     if (selectedChar) {
                         attemptMatch(selectedChar, z, selectedElement);
@@ -558,10 +680,6 @@
 
                 tgt.appendChild(z);
             });
-
-            // グローバルなタッチ移動・終了監視をセット
-            window.addEventListener('touchmove', handleWindowTouchMove, { passive: false });
-            window.addEventListener('touchend', handleWindowTouchEnd, { passive: false });
         }
 
         // 画面全体のタッチ移動イベントハンドラ
@@ -582,34 +700,29 @@
             e.preventDefault();
             
             const touch = e.changedTouches[0];
-            // 指を離した位置にあるドロップターゲットを特定
             const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
             let zone = null;
             if (dropTarget) {
                 zone = dropTarget.closest('.dropzone');
             }
             
-            // スタイルをリセット
-            activeDragEl.style.position = '';
-            activeDragEl.style.left = '';
-            activeDragEl.style.top = '';
-            activeDragEl.style.zIndex = '';
-            activeDragEl.style.pointerEvents = '';
-            activeDragEl.style.width = '';
-            activeDragEl.style.height = '';
-            activeDragEl.style.transform = '';
-            
             const cardEl = activeDragEl;
             const char = selectedChar;
-            activeDragEl = null;
+            activeDragEl = null; // リセット
+            
+            // スタイルの完全復元
+            cardEl.style.position = '';
+            cardEl.style.left = '';
+            cardEl.style.top = '';
+            cardEl.style.zIndex = '';
+            cardEl.style.pointerEvents = '';
+            cardEl.style.width = '';
+            cardEl.style.height = '';
+            cardEl.style.transform = '';
             
             if (zone) {
                 attemptMatch(char, zone, cardEl);
             }
-            
-            // リスナー解除
-            window.removeEventListener('touchmove', handleWindowTouchMove);
-            window.removeEventListener('touchend', handleWindowTouchEnd);
         }
 
         function showResult() {
