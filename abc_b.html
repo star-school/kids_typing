@@ -640,7 +640,7 @@
             if (sortedMistakes.length > 0) {
                 weakLettersHTML = `
                     <div class="weak-letters-container">
-                        <div class="weak-title">⭐ つぎは これを れんしゅうしてみよう！</div>
+                        <div class="weak-title">⭐ このもじを たしかめておいてね！</div>
                         <div class="weak-grid">
                 `;
                 sortedMistakes.forEach(([char, count]) => {
@@ -681,11 +681,11 @@
                         <div class="legend-container">
                             <div class="legend-item">
                                 <span class="legend-color ok"></span>
-                                <span>できた！: ${firstTryCorrectCount}もん</span>
+                                <span>できた: ${firstTryCorrectCount}もん</span>
                             </div>
                             <div class="legend-item">
                                 <span class="legend-color retry"></span>
-                                <span>えらびなおした！: ${retryCount}もん</span>
+                                <span>えらびなおし: ${retryCount}もん</span>
                             </div>
                         </div>
                     </div>
