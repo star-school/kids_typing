@@ -8,11 +8,11 @@
         :root { 
             --primary: #3498db; --success: #2ecc71; --gold: #f1c40f; --miss: #e74c3c; --bg: #f8fbff; 
             
-            /* 添付画像に基づいた指使いカラー（左右の手を別々に色分け） */
+            /* 指使いカラー（左右の手を色分け） */
             --f-pinky-l: #ff5e57;   /* 左手小指：赤 */
             --f-ring-l: #f1c40f;    /* 左手薬指：黄色 */
             --f-middle-l: #2ecc71;  /* 左手中指：緑 */
-            --f-index-l: #00d2d3;   /* 左手人差し指：水色（シアン） */
+            --f-index-l: #00d2d3;   /* 左手人差し指：水色 */
             --f-index-r: #3867d6;   /* 右手人差し指：青 */
             --f-middle-r: #20bf6b;  /* 右手中指：深緑 */
             --f-ring-r: #ff9f43;    /* 右手薬指：オレンジ */
@@ -37,7 +37,7 @@
             margin: 0; 
             padding: 10px 10px 30px 10px; 
             overflow-x: hidden;
-            touch-action: manipulation; /* ダブルタップズームを防止 */
+            touch-action: manipulation; /* ダブルタップズーム防止 */
         }
         
         .overlay { 
@@ -54,17 +54,19 @@
             z-index: 1000; 
             text-align: center; 
             padding: 20px;
+            overflow-y: auto;
         }
         .main-title { font-size: 36px; color: var(--primary); font-weight: bold; margin-bottom: 5px; }
-        .sub-title { color: #7f8c8d; margin-bottom: 25px; font-size: 18px; }
+        .sub-title { color: #7f8c8d; margin-bottom: 12px; font-size: 16px; font-weight: bold; }
         
-        .voice-selector { 
-            background: #f0f0f0; padding: 6px; border-radius: 40px; display: flex; gap: 5px; margin-bottom: 30px; border: 2px solid #ddd;
+        /* 設定セレクター共通 */
+        .setting-selector { 
+            background: #f0f0f0; padding: 5px; border-radius: 40px; display: inline-flex; gap: 5px; margin-bottom: 25px; border: 2px solid #ddd;
         }
-        .voice-btn {
-            padding: 12px 20px; border-radius: 30px; border: none; cursor: pointer; font-weight: bold; background: transparent; color: #888; transition: 0.3s; font-size: 15px;
+        .setting-btn {
+            padding: 10px 18px; border-radius: 30px; border: none; cursor: pointer; font-weight: bold; background: transparent; color: #888; transition: 0.3s; font-size: 14px;
         }
-        .voice-btn.active { background: white; color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .setting-btn.active { background: white; color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
         /* コレクションマップ */
         .collection-container { 
@@ -150,12 +152,141 @@
         
         #status-msg { font-size: 18px; font-weight: bold; color: #7f8c8d; margin-top: 12px; height: 24px; text-align: center; }
 
+        /* リザルト画面・分析パーツ */
+        .result-card {
+            background: white;
+            padding: 20px;
+            border-radius: 24px;
+            border: 2px solid #e1e8ed;
+            width: 100%;
+            max-width: 450px;
+            margin: 15px 0;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+        .chart-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 15px 0;
+        }
+        /* CSSドーナツ円グラフ */
+        .donut-chart {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: conic-gradient(var(--success) 0% 0%, #ffeaa7 0% 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05), 0 4px 10px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
+        }
+        .donut-chart::before {
+            content: "";
+            position: absolute;
+            width: 95px;
+            height: 95px;
+            background: white;
+            border-radius: 50%;
+        }
+        .donut-center-text {
+            position: absolute;
+            font-size: 26px;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            line-height: 1.1;
+        }
+        .donut-center-text span {
+            font-size: 11px;
+            color: #7f8c8d;
+            display: block;
+            margin-top: 2px;
+        }
+        .legend-container {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            font-size: 13px;
+            font-weight: bold;
+            color: #555;
+            border-top: 1px dashed #eee;
+            padding-top: 10px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+        }
+        .legend-color.ok { background-color: var(--success); }
+        .legend-color.retry { background-color: #ffeaa7; }
+
+        /* にがてなもじ（えらびなおしたもじ）エリア */
+        .weak-letters-container {
+            margin-top: 15px;
+            text-align: center;
+            width: 100%;
+        }
+        .weak-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+        }
+        .weak-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+        .weak-slot {
+            width: 32px;
+            height: 40px;
+            background: #fff;
+            border: 2px solid #ccc;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+            position: relative;
+        }
+        .weak-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: var(--miss);
+            color: white;
+            font-size: 9px;
+            border-radius: 10px;
+            padding: 1px 4px;
+            font-weight: bold;
+        }
+        .perfect-badge {
+            font-size: 40px;
+            margin: 10px 0;
+            animation: bounce 1s infinite alternate;
+        }
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-8px); }
+        }
+
         /* スマホ縦画面での微調整 (メディアクエリ) */
         @media (max-width: 480px) {
             .main-title { font-size: 30px; }
-            .sub-title { font-size: 16px; margin-bottom: 15px; }
-            .voice-selector { margin-bottom: 20px; }
-            .voice-btn { padding: 10px 15px; font-size: 13px; }
+            .sub-title { font-size: 14px; margin-bottom: 8px; }
+            .setting-selector { margin-bottom: 20px; padding: 4px; }
+            .setting-btn { padding: 8px 14px; font-size: 12px; }
             
             .char-slot { 
                 width: calc((100vw - 60px) / 13); /* 画面幅に合わせて自動縮小 */
@@ -175,6 +306,11 @@
             .choices-grid { gap: 10px; }
             .choice-card { padding: 16px 0; font-size: 30px; border-radius: 12px; border-width: 2px; }
             #status-msg { font-size: 16px; margin-top: 8px; }
+            
+            .result-card { padding: 15px; }
+            .donut-chart { width: 120px; height: 120px; }
+            .donut-chart::before { width: 80px; height: 80px; }
+            .donut-center-text { font-size: 22px; }
         }
     </style>
 </head>
@@ -182,14 +318,23 @@
 
     <div id="start-screen" class="overlay">
         <div class="main-title">アルファベット</div>
-        <div class="sub-title">こえの しゅるい を えらんでね</div>
         
-        <div class="voice-selector">
-            <button id="mode-kana" class="voice-btn active" onclick="setVoiceMode('kana')">ひらがな (にほんご)</button>
-            <button id="mode-native" class="voice-btn" onclick="setVoiceMode('native')">Native (えいご)</button>
+        <div class="sub-title">🔊 こえの しゅるい</div>
+        <div class="setting-selector">
+            <button id="mode-kana" class="setting-btn active" onclick="setVoiceMode('kana')">ひらがな (にほんご)</button>
+            <button id="mode-native" class="setting-btn" onclick="setVoiceMode('native')">Native (えいご)</button>
         </div>
 
-        <button class="btn" onclick="initGame()">スタート</button>
+        <div class="sub-title">📝 もんだいの かず</div>
+        <div class="setting-selector">
+            <button id="q-5" class="setting-btn" onclick="setQuestionCount(5)">5もん</button>
+            <button id="q-10" class="setting-btn" onclick="setQuestionCount(10)">10もん</button>
+            <button id="q-all" class="setting-btn active" onclick="setQuestionCount(26)">ぜんぶ (26もん)</button>
+        </div>
+
+        <div style="margin-top: 10px;">
+            <button class="btn" onclick="initGame()">スタート！</button>
+        </div>
     </div>
 
     <!-- 進捗マップセクション -->
@@ -217,12 +362,11 @@
     <div id="status-msg"></div>
 
     <div id="result-screen" class="overlay" style="display:none;">
-        <div id="result-content"></div>
+        <div id="result-content" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
         <button class="btn" onclick="location.reload()">もういちど あそぶ</button>
     </div>
 
     <script>
-        // 添付画像の指配置に基づき、finger情報をアップデート
         const charData = {
             'A': { read: 'えー', finger: 'pinky-l', fill: 'fill-a' },
             'B': { read: 'びー', finger: 'index-l' },
@@ -259,11 +403,21 @@
         ];
 
         const alphaKeys = Object.keys(charData);
-        let cleared = new Set();
+        let cleared = new Set(); // 永続的な全体のクリア記録
+        let sessionCleared = new Set(); // 今プレイ中のクリア記録
+        
         let currentTarget = "";
         let audioCtx;
         let voiceMode = 'kana';
         let currentLayout = 'abc';
+        
+        // プレイ中の統計用変数
+        let totalQuestions = 26; // 今回の最大問題数
+        let currentQuestionsList = []; // 出題配列
+        let currentQuestionIndex = 0; // 今何問目か
+        let firstTryCorrectCount = 0; // 一発正解数
+        let currentTargetMistakes = 0; // 現在の問題のミスカウント
+        let mistakesMap = {}; // 間違えたアルファベットの回数をカウント
 
         // iOS/Android向け Web Speech API & Web Audio API アンロック処理
         function unlockAudio() {
@@ -273,7 +427,6 @@
             if (audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
-            // iOS向けの音声合成（SpeechSynthesis）無音アンロック発声
             const silentUttr = new SpeechSynthesisUtterance("");
             silentUttr.volume = 0;
             speechSynthesis.speak(silentUttr);
@@ -284,12 +437,20 @@
             document.getElementById('mode-native').classList.toggle('active', mode === 'native');
             document.getElementById('mode-kana').classList.toggle('active', mode === 'kana');
             
-            // ユーザーアクションなのでここでアンロックを兼ねてデモ発声
             unlockAudio();
             const uttr = new SpeechSynthesisUtterance(mode === 'native' ? "Ready" : "スタート");
             uttr.lang = mode === 'native' ? 'en-US' : 'ja-JP';
             speechSynthesis.cancel();
             speechSynthesis.speak(uttr);
+        }
+
+        // もんだい数を選択する
+        function setQuestionCount(count) {
+            totalQuestions = count;
+            document.getElementById('q-5').classList.toggle('active', count === 5);
+            document.getElementById('q-10').classList.toggle('active', count === 10);
+            document.getElementById('q-all').classList.toggle('active', count === 26);
+            unlockAudio();
         }
 
         function switchMapLayout(layout) {
@@ -311,7 +472,9 @@
         function createSlot(c) {
             const s = document.createElement('div');
             const data = charData[c];
-            s.className = `char-slot border-${data.finger} ${cleared.has(c) ? 'active' : ''} ${data.fill || ''}`;
+            // 全体または今セッションでクリアされたら点灯
+            const isActive = cleared.has(c) || sessionCleared.has(c);
+            s.className = `char-slot border-${data.finger} ${isActive ? 'active' : ''} ${data.fill || ''}`;
             s.textContent = c;
             return s;
         }
@@ -338,15 +501,27 @@
         }
 
         function initGame() {
-            unlockAudio(); // ゲーム起動時のアンロック
+            unlockAudio();
             document.getElementById('start-screen').style.display = 'none';
+            
+            // プレイデータ初期化
+            sessionCleared.clear();
+            currentQuestionIndex = 0;
+            firstTryCorrectCount = 0;
+            mistakesMap = {};
+            
+            // ランダムに問題を選び出す
+            const shuffled = [...alphaKeys].sort(() => Math.random() - 0.5);
+            currentQuestionsList = shuffled.slice(0, Math.min(totalQuestions, alphaKeys.length));
+            totalQuestions = currentQuestionsList.length; // 念のため実際のリストの長さで合わせる
+
             renderCollectionMap();
             nextQuestion();
         }
 
         function playCurrentTarget() {
             if (!currentTarget) return;
-            unlockAudio(); // 再生の度、念のためアンロックを走らせる
+            unlockAudio();
             speechSynthesis.cancel();
             
             const uttr = new SpeechSynthesisUtterance();
@@ -363,11 +538,14 @@
         }
 
         function nextQuestion() {
-            const remaining = alphaKeys.filter(c => !cleared.has(c));
-            if (remaining.length === 0) return showResult();
+            if (currentQuestionIndex >= currentQuestionsList.length) {
+                return showResult();
+            }
 
             document.getElementById('status-msg').textContent = "";
-            currentTarget = remaining[Math.floor(Math.random() * remaining.length)];
+            currentTarget = currentQuestionsList[currentQuestionIndex];
+            currentTargetMistakes = 0;
+            
             document.getElementById('reading-display').textContent = charData[currentTarget].read;
             
             let choices = [currentTarget];
@@ -383,7 +561,7 @@
                 const card = document.createElement('div');
                 card.className = 'choice-card';
                 card.textContent = c;
-                // touchstartによる高速な応答とクリック両対応
+                
                 let answered = false;
                 const handleAnswer = (e) => {
                     e.preventDefault();
@@ -396,24 +574,42 @@
                 grid.appendChild(card);
             });
 
-            // 自動的に問題音声を再生
             setTimeout(playCurrentTarget, 400);
         }
 
         function checkAnswer(selected, element) {
-            unlockAudio(); // 正解/不正解時の音のアンロック
+            unlockAudio();
             if (selected === currentTarget) {
                 element.classList.add('correct');
+                
+                // 初回正解数をカウント
+                if (currentTargetMistakes === 0) {
+                    firstTryCorrectCount++;
+                }
+                
                 cleared.add(currentTarget);
+                sessionCleared.add(currentTarget);
                 renderCollectionMap();
+                
                 document.getElementById('status-msg').textContent = "すごい！";
                 playSfx(659, 0.3);
+                
+                currentQuestionIndex++;
                 setTimeout(nextQuestion, 1200);
             } else {
                 element.classList.add('wrong');
+                currentTargetMistakes++;
+                
+                // 苦手な文字のミス回数を記録
+                mistakesMap[currentTarget] = (mistakesMap[currentTarget] || 0) + 1;
+                
                 document.getElementById('status-msg').textContent = "えらびなおそう!";
                 playSfx(150, 0.2);
-                setTimeout(() => element.classList.remove('wrong'), 600);
+                setTimeout(() => {
+                    element.classList.remove('wrong');
+                    // 回答フラグをリセットさせるため、このカードを再活性化可能にする
+                    // タップ終了イベントリスナーを一度きりにしているので、クリック可能にするために新しいイベントに更新するか、そのまま残します
+                }, 600);
             }
         }
 
@@ -428,12 +624,84 @@
         }
 
         function showResult() {
-            document.getElementById('result-screen').style.display = 'flex';
-            document.getElementById('result-content').innerHTML = `
-                <div class="main-title" style="color:var(--gold); margin-bottom:15px;">コンプリート！</div>
-                <p style="font-size:18px; line-height:1.6; margin-bottom:30px;">すべての アルファベットを クリアしたね！<br>おめでとう！</p>
+            const resScreen = document.getElementById('result-screen');
+            const resContent = document.getElementById('result-content');
+            resScreen.style.display = 'flex';
+            
+            // 一発正解率（できた％）を計算
+            const firstTryPercent = Math.round((firstTryCorrectCount / totalQuestions) * 100);
+            const retryPercent = 100 - firstTryPercent;
+            const retryCount = totalQuestions - firstTryCorrectCount;
+
+            // にがてな文字（えらびなおしが多かった順にソート）
+            const sortedMistakes = Object.entries(mistakesMap).sort((a, b) => b[1] - a[1]);
+            
+            let weakLettersHTML = "";
+            if (sortedMistakes.length > 0) {
+                weakLettersHTML = `
+                    <div class="weak-letters-container">
+                        <div class="weak-title">⭐ つぎは これを れんしゅうしてみよう！</div>
+                        <div class="weak-grid">
+                `;
+                sortedMistakes.forEach(([char, count]) => {
+                    const data = charData[char];
+                    weakLettersHTML += `
+                        <div class="weak-slot border-${data.finger}">
+                            ${char}
+                            <span class="weak-badge">${count}</span>
+                        </div>
+                    `;
+                });
+                weakLettersHTML += `
+                        </div>
+                    </div>
+                `;
+            } else {
+                // ノーミスの場合
+                weakLettersHTML = `
+                    <div class="perfect-badge">👑</div>
+                    <p style="font-size: 16px; font-weight: bold; color: var(--gold); margin-top: 5px;">ぜんぶ いっぱつで できたよ！パーフェクト！</p>
+                `;
+            }
+
+            resContent.innerHTML = `
+                <div class="main-title" style="color:var(--gold); margin-bottom:10px;">できたよ！</div>
+                
+                <div class="result-card">
+                    <div class="chart-section">
+                        <!-- CSSドーナツ円グラフ -->
+                        <div class="donut-chart" id="resultChart">
+                            <div class="donut-center-text">
+                                ${firstTryPercent}%
+                                <span>いっぱつせいかい</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 凡例 -->
+                        <div class="legend-container">
+                            <div class="legend-item">
+                                <span class="legend-color ok"></span>
+                                <span>できた！: ${firstTryCorrectCount}もん</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color retry"></span>
+                                <span>えらびなおした！: ${retryCount}もん</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${weakLettersHTML}
+                </div>
             `;
-            // お祝いの紙吹雪をモバイルでも軽快に描画する
+
+            // ドーナツグラフのConic Gradientを設定
+            const resultChart = document.getElementById('resultChart');
+            if (resultChart) {
+                // もしパーフェクト（100%）なら全体をsuccess色に、そうでなければ比率分
+                resultChart.style.background = `conic-gradient(var(--success) 0% ${firstTryPercent}%, #ffeaa7 ${firstTryPercent}% 100%)`;
+            }
+
+            // 紙吹雪アニメーション
             for(let i=0; i<60; i++) {
                 const c = document.createElement('div');
                 c.style.cssText = `position:fixed; width:8px; height:8px; background:hsl(${Math.random()*360},80%,65%); top:-10px; left:${Math.random()*100}vw; z-index:1100; pointer-events:none; border-radius:50%;`;
