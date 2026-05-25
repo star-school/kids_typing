@@ -7,6 +7,7 @@
     <style>
         :root {
             --primary: #3498db; --success: #2ecc71; --gold: #f1c40f; --miss: #e74c3c; --bg: #f8fbff;
+            --retry: #ffbe76; /* えらびなおしカラー：明るいオレンジ */
             
             /* 添付画像に基づく 左右の指使いカラーパレット */
             --f-pinky-l: #ff5e57;  /* 左手小指：赤 */
@@ -46,6 +47,7 @@
         .settings-area { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; width: 90%; max-width: 320px; }
         .toggle-btn { padding: 12px 15px; font-size: 15px; border: 2px solid var(--primary); border-radius: 12px; background: white; color: var(--primary); cursor: pointer; transition: 0.2s; font-weight: bold; }
         .toggle-btn.off { border-color: #95a5a6; color: #95a5a6; }
+        .toggle-btn.active-q { background: var(--primary); color: white; border-color: var(--primary); }
 
         /* コレクションマップ */
         .collection-container { 
@@ -123,7 +125,7 @@
             width: 100%; 
         }
 
-        /* ➔ 改良！矢印ガイド付きの仕切り線コンテナ */
+        /* 矢印ガイド付きの仕切り線コンテナ */
         .board-divider-container {
             display: flex;
             align-items: center;
@@ -222,8 +224,64 @@
             100% { box-shadow: 0 15px 35px rgba(243, 156, 18, 0.5), 0 0 0 0px rgba(243, 156, 18, 0); }
         }
 
-        .stats-card { background: #fff; padding: 20px; border-radius: 20px; border: 2px solid #eee; margin: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); width: 85%; max-width: 400px; }
+        .stats-card { background: #fff; padding: 20px; border-radius: 20px; border: 2px solid #eee; margin: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); width: 85%; max-width: 440px; }
         .stat-detail { text-align: left; font-size: 16px; color: #555; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
+
+        /* ドーナツグラフスタイル */
+        .donut-chart {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin: 15px auto;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .donut-chart::before {
+            content: "";
+            position: absolute;
+            width: 95px;
+            height: 95px;
+            background: white;
+            border-radius: 50%;
+        }
+        .donut-chart-text {
+            position: relative;
+            z-index: 1;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            line-height: 1.2;
+        }
+        .donut-chart-text span {
+            font-size: 11px;
+            display: block;
+            color: #7f8c8d;
+            font-weight: normal;
+        }
+
+        /* グラフの凡例 */
+        .legend-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 10px 0;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
 
         /* スマホ・極小画面用レイアウト調整 */
         @media (max-width: 600px) {
@@ -273,10 +331,17 @@
         <div class="main-title">アルファベットクエスト</div>
         <div class="sub-title">おおもじ・こもじをあわせよう</div>
         <div class="settings-area">
+            <!-- ➔ 改良：遊ぶ前の問題数えらび -->
+            <div style="font-size: 15px; font-weight: bold; color: #555; margin-bottom: 2px; text-align: left; padding-left: 5px;">もんだいのかず：</div>
+            <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 10px; width: 100%;">
+                <button id="qNum5" class="toggle-btn active-q" onclick="setQuestionNum(5)" style="flex:1;">5もん</button>
+                <button id="qNum10" class="toggle-btn" onclick="setQuestionNum(10)" style="flex:1;">10もん</button>
+                <button id="qNumAll" class="toggle-btn" onclick="setQuestionNum(26)" style="flex:1;">ぜんぶ</button>
+            </div>
             <button id="soundMasterBtn" class="toggle-btn" onclick="toggleSoundMaster()">[ 音・こえ: ON ]</button>
             <button id="voiceModeBtn" class="toggle-btn" onclick="toggleVoiceMode()">[ こえの しゅるい: 日本語よみ ]</button>
         </div>
-        <button class="btn" onclick="initGame()">ぼうけん を はじめる</button>
+        <button class="btn" onclick="initGame()">はじめる</button>
     </div>
 
     <div class="collection-container" id="collectionContainer">
@@ -293,7 +358,7 @@
 
     <div id="status-msg">おおもじ を うえに はこぼう！</div>
 
-    <!-- 上下グリッド式のゲームボード (大文字を下、小文字を上に入れ替え) -->
+    <!-- 上下グリッド式のゲームボード -->
     <div class="game-board">
         <!-- 上段：小文字枠 -->
         <div class="card-container" id="targets"></div>
@@ -355,10 +420,17 @@
         ];
 
         let audioCtx, cleared = new Set(), startTime, roundSolved = 0;
-        let parentMisses = 0, transMisses = 0, isSoundEnabled = true, voiceMode = 'ja', currentLayout = 'abc';
+        let isSoundEnabled = true, voiceMode = 'ja', currentLayout = 'abc';
         
+        // 問題数設定用のステート
+        let totalQuestionsLimit = 5;
+        let gameSessionList = []; // このゲーム中に取り組む全アルファベットの配列
+
         // バグ防止：現在ステージの総問題数を記憶する変数
         let currentRoundLength = 0;
+
+        // ポジティブ集計用のステート：各アルファベットで選び直し（ミス）が発生した回数
+        let attemptsPerChar = {};
 
         // 2タップ選択用のステート
         let selectedChar = null;
@@ -370,6 +442,14 @@
         let elStartX = 0, elStartY = 0;
 
         const alpha = Object.keys(charData);
+
+        // ➔ 改良：問題数の変更ロジック
+        function setQuestionNum(num) {
+            totalQuestionsLimit = num;
+            document.getElementById('qNum5').classList.toggle('active-q', num === 5);
+            document.getElementById('qNum10').classList.toggle('active-q', num === 10);
+            document.getElementById('qNumAll').classList.toggle('active-q', num === 26);
+        }
 
         function toggleSoundMaster() {
             isSoundEnabled = !isSoundEnabled;
@@ -493,6 +573,14 @@
 
             document.getElementById('start-screen').style.display = 'none';
             startTime = Date.now(); 
+
+            // ➔ 改良：今回のゲームセッションで取り組む問題を抽出
+            gameSessionList = [...alpha].sort(() => Math.random() - 0.5).slice(0, totalQuestionsLimit);
+            attemptsPerChar = {};
+            gameSessionList.forEach(c => {
+                attemptsPerChar[c] = 0;
+            });
+
             renderCollectionMap(); 
             startRound();
         }
@@ -504,7 +592,6 @@
             }
             
             if (selectedElement === el) {
-                // すでに選択されてるカードを再度タップしたらキャンセル
                 selectedElement = null;
                 selectedChar = null;
                 document.getElementById('status-msg').textContent = "おおもじ を えらんでね！";
@@ -539,7 +626,10 @@
                 sfx.ok(); 
                 
                 speak(targetChar).then(() => {
-                    if(cleared.size === 26) {
+                    // 全文字の完了判定をセッション文字配列ベースに変更
+                    const isAllCleared = gameSessionList.every(c => cleared.has(c));
+                    
+                    if(isAllCleared) {
                         setTimeout(showResult, 500);
                     } else if(roundSolved === currentRoundLength) { 
                         document.getElementById('status-msg').textContent = "すばらしい！"; 
@@ -551,12 +641,13 @@
                     }
                 });
             } else if (droppedChar !== targetChar) {
-                if(charData[targetChar].type === 'parent') parentMisses++; else transMisses++;
+                // ➔ 改良：ミスではなく、ポジティブに「えらびなおし数（attempts）」をインクリメント
+                attemptsPerChar[targetChar] = (attemptsPerChar[targetChar] || 0) + 1;
                 sfx.ng(); 
                 document.getElementById('status-msg').textContent = "ちがう みたい！"; 
                 document.getElementById('status-msg').style.color = "var(--miss)";
                 
-                // ミスしたときに一時的に選択を解除
+                // 選択を解除
                 if (cardElement) {
                     cardElement.classList.remove('selected');
                     if (selectedElement === cardElement) {
@@ -571,10 +662,15 @@
         function resetGame() {
             document.getElementById('result-screen').style.display = 'none';
             cleared.clear();
-            parentMisses = 0;
-            transMisses = 0;
             roundSolved = 0;
             startTime = Date.now();
+            
+            // ➔ 新たにセッション問題と選択の初期化
+            gameSessionList = [...alpha].sort(() => Math.random() - 0.5).slice(0, totalQuestionsLimit);
+            attemptsPerChar = {};
+            gameSessionList.forEach(c => {
+                attemptsPerChar[c] = 0;
+            });
             
             renderCollectionMap();
             startRound();
@@ -592,16 +688,18 @@
             selectedElement = null;
             roundSolved = 0;
             
-            const remaining = alpha.filter(c => !cleared.has(c));
+            // 未クリアのセッション文字を抽出
+            const remaining = gameSessionList.filter(c => !cleared.has(c));
             if (remaining.length === 0) return showResult();
             
-            const current = remaining.sort(() => Math.random() - 0.5).slice(0, 5);
+            // 5問ずつのセットにする
+            const current = remaining.slice(0, 5);
             
             // 現在のステージの問題数を正しくセット（最後の端数でも正しく動作）
             currentRoundLength = current.length;
             
             // 下段：大文字カードの生成
-            current.sort(() => Math.random() - 0.5).forEach(c => {
+            [...current].sort(() => Math.random() - 0.5).forEach(c => {
                 const d = document.createElement('div');
                 d.className = 'draggable'; 
                 d.draggable = true;
@@ -725,21 +823,89 @@
             }
         }
 
+        // ➔ 改良：リザルト画面に「できた/えらびなおし」のポジティブな％ドーナツグラフと、にがて文字の表示を追加
         function showResult() {
             document.getElementById('nextBtn').classList.remove('show');
             const time = Math.floor((Date.now() - startTime) / 1000);
             const res = document.getElementById('result-screen');
             res.style.display = 'flex';
-            const perfect = (parentMisses + transMisses) === 0;
-            if(perfect) sfx.perfect(); else sfx.clear();
+            
+            // 「いっぱつでできた(perfect)」と「えらびなおしてできた(retry)」をポジティブ集計
+            let perfectCount = 0;
+            let retryCount = 0;
+            let failedChars = []; // えらびなおしが1回以上あった文字
+
+            gameSessionList.forEach(c => {
+                if ((attemptsPerChar[c] || 0) === 0) {
+                    perfectCount++;
+                } else {
+                    retryCount++;
+                    failedChars.push(c);
+                }
+            });
+
+            // いっぱつ正解率(できた率)を計算
+            const totalPlayed = gameSessionList.length;
+            const accuracyPercent = Math.round((perfectCount / totalPlayed) * 100);
+            const perfectRatio = (perfectCount / totalPlayed) * 100;
+            
+            // 音声効果
+            const perfectAll = failedChars.length === 0;
+            if(perfectAll) sfx.perfect(); else sfx.clear();
+
+            // にがてな（えらびなおした）文字のやさしい応援ガイド
+            let failedGuideHTML = "";
+            if (failedChars.length > 0) {
+                failedGuideHTML = `
+                    <div style="margin-top: 15px; font-weight: bold; color: #555; font-size: 14px;"> このもじを たしかめておいてね！🌟</div>
+                    <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 8px;">
+                        ${failedChars.map(c => `
+                            <span style="background: #ffeaa7; color: #d35400; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 15px; border: 1px solid #f39c12; display: inline-flex; align-items: center; gap: 4px;">
+                                <strong style="font-size: 18px;">${c}</strong><span style="font-size:12px; font-weight:normal; opacity:0.8;">${c.toLowerCase()}</span>
+                            </span>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                failedGuideHTML = `
+                    <div style="margin-top: 15px; font-weight: bold; color: #f1c40f; font-size: 16px; animation: pop 1s infinite alternate;">👑 ぜんぶ いっぱつで できたよ！👑</div>
+                `;
+            }
+
             document.getElementById('result-content').innerHTML = `
-                <div style="font-size:32px; font-weight:bold; color:var(--gold); margin-bottom:10px;">*** ${perfect ? 'PERFECT!' : 'CLEAR!'} ***</div>
+                <div style="font-size:32px; font-weight:bold; color:var(--gold); margin-bottom:10px;">*** ${perfectAll ? 'PERFECT!' : 'CLEAR!'} ***</div>
                 <div class="stats-card">
+                    <!-- ポジティブビジュアル：ドーナツグラフ（conic-gradientを利用） -->
+                    <div class="donut-chart" style="background: conic-gradient(var(--success) 0% ${perfectRatio}%, var(--retry) ${perfectRatio}% 100%);">
+                        <div class="donut-chart-text">
+                            ${accuracyPercent}%
+                            <span>いっぱつ率</span>
+                        </div>
+                    </div>
+
+                    <!-- グラフの凡例 -->
+                    <div class="legend-container">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--success);"></div>
+                            <span>いっぱつでできた！</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: var(--retry);"></div>
+                            <span>あきらめずにできた！</span>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px dashed #eee; margin: 15px 0 10px 0;"></div>
+
                     <div class="stat-detail"><span>タイム</span> <b>${time}びょう</b></div>
-                    <div class="stat-detail"><span>おやこグループのミス</span> <b>${parentMisses}かい</b></div>
-                    <div class="stat-detail"><span>へんしんグループのミス</span> <b>${transMisses}かい</b></div>
+                    <div class="stat-detail"><span>ぜんぶの もんだい</span> <b>${totalPlayed}もん</b></div>
+                    <div class="stat-detail"><span>いっぱつで できた！</span> <b style="color:var(--success);">${perfectCount}もん</b></div>
+                    
+                    ${failedGuideHTML}
                 </div>
             `;
+
+            // お祝いの紙吹雪エフェクト
             for(let i=0; i<80; i++) {
                 const c = document.createElement('div');
                 c.style.cssText = `position:fixed; width:10px; height:10px; background:hsl(${Math.random()*360},70%,60%); top:-10px; left:${Math.random()*100}vw; z-index:1100; pointer-events:none;`;
