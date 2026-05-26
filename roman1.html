@@ -66,7 +66,7 @@
             cursor: pointer; border: none; border-radius: 16px; color: white;
             transition: all 0.2s; box-shadow: 0 6px 0 rgba(0,0,0,0.2); position: relative;
         }
-        .menu-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+        .menu-btn:active { transform: translateY(4px); box-shadow: none; }
         .btn-time { background: #3498db; }
         .btn-nomiss { background: #e67e22; }
         .btn-howto { background: #2ecc71; }
@@ -79,10 +79,23 @@
             overflow: hidden; box-shadow: var(--shadow);
         }
 
+        /* ミスゾーンのスタイル */
         #judgment-zone { 
-            position: absolute; bottom: 30px; width: 100%; height: 70px; 
-            background: rgba(46, 213, 115, 0.1); border-top: 3px dashed #2ecc71; 
-            border-bottom: 3px dashed #2ecc71; z-index: 1; 
+            position: absolute; bottom: 0; width: 100%; height: 100px; 
+            background: rgba(231, 76, 60, 0.12); border-top: 3px dashed #e74c3c; 
+            z-index: 1; 
+        }
+
+        #judgment-zone::after {
+            content: '▲ ここから下は ミスゾーン ▲';
+            position: absolute;
+            right: 15px;
+            top: 6px;
+            font-size: 11px;
+            color: #e74c3c;
+            font-weight: bold;
+            opacity: 0.9;
+            letter-spacing: 0.5px;
         }
 
         .block { 
@@ -93,10 +106,11 @@
         }
 
         .hit-effect {
-            position: absolute; font-size: 24px; font-weight: bold; color: #2ecc71;
-            pointer-events: none; animation: floatUp 0.5s forwards; z-index: 10;
+            position: absolute; font-size: 22px; font-weight: bold;
+            pointer-events: none; animation: floatUp 0.6s forwards; z-index: 10;
+            text-shadow: 2px 2px 0 white;
         }
-        @keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-40px); } }
+        @keyframes floatUp { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-50px) scale(0.8); } }
 
         /* キーボード */
         #keyboard-area { margin-top: 20px; background: #dfe4ea; padding: 12px; border-radius: 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
@@ -119,12 +133,59 @@
         
         .pressed { transform: translateY(2px); border-bottom-width: 1px; background: #95a5a6 !important; color: white; }
 
-        #ui-layer { width: 450px; display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 20px; font-weight: bold; }
+        #ui-layer { 
+            width: 450px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 10px; 
+            font-size: 20px; 
+            font-weight: bold; 
+        }
         #combo-display { color: #e67e22; font-size: 24px; text-shadow: 1px 1px 0 white; min-height: 1.5em; }
         #timer-display { color: #e74c3c; }
 
+        /* やめるボタン */
+        .quit-btn {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #7f8c8d;
+            transition: all 0.1s;
+        }
+        .quit-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #7f8c8d;
+        }
+
+        /* 一時停止ダイアログ */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center;
+            max-width: 350px; width: 90%; animation: popIn 0.2s ease-out;
+        }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-btn {
+            padding: 12px 20px; border: none; border-radius: 12px;
+            font-weight: bold; cursor: pointer; font-size: 16px; flex: 1;
+            transition: transform 0.1s;
+        }
+        .modal-btn:active { transform: scale(0.95); }
+        .btn-yes { background: #e74c3c; color: white; box-shadow: 0 4px 0 #c0392b; }
+        .btn-no { background: #2ecc71; color: white; box-shadow: 0 4px 0 #27ae60; }
+
         /* リザルト */
-        .result-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); text-align: center; width: 400px; }
+        .result-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); text-align: center; width: 440px; }
         .stat-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f2f6; font-size: 20px; }
         .vowel-analysis { margin-top: 20px; }
         .v-bar-container { height: 10px; background: #eee; border-radius: 5px; overflow: hidden; margin: 5px 0 15px 0; }
@@ -166,9 +227,9 @@
     <div id="howto-screen" class="screen">
         <div style="background: white; padding: 30px; border-radius: 20px; max-width: 500px; box-shadow: var(--shadow);">
             <h2 style="color:#2ecc71; margin-top:0;">あそびかた</h2>
-            <p><strong>1. おちてくる文字を打とう！</strong><br>「ka」なら「A」のように、右側のアルファベットを打ってね。</p>
-            <p><strong>2. タイミングがだいじ！</strong><br>みどりの点線のわくの中で打つと「Perfect」だよ！</p>
-            <p><strong>3. 設定をかえてみよう！</strong><br>「ゆっくり」は、ずっと同じはやさで文字が出るよ。</p>
+            <p><strong>1. おちてくる文字を打とう！</strong><br>ひらがなが見えたら、そのローマじ（母音）をキーボードで打ってね。</p>
+            <p><strong>2. ミスゾーンに入る前に打とう！</strong><br>画面の下にある赤点線の「ミスゾーン」に入ってしまうと、もじを うちのがして ミスになるよ！</p>
+            <p><strong>3. ローマ字を覚えていると超有利！</strong><br>ひらがな（下）が先に見えるよ。ローマじ（上）がみえる前にうてると、とってもカッコいいね！</p>
             <button class="menu-btn btn-back" onclick="showTitle()">もどる</button>
         </div>
     </div>
@@ -177,6 +238,7 @@
     <div id="game-screen" class="screen">
         <div id="ui-layer">
             <div id="timer-display">のこり: 60</div>
+            <button class="quit-btn" onclick="showQuitConfirm()">やめる</button>
             <div id="score-display">00000</div>
         </div>
         <div id="combo-display"></div>
@@ -196,6 +258,21 @@
         </div>
     </div>
 
+    <!-- やめる確認モーダル -->
+    <div id="quit-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3 style="margin-top: 0; color: #e74c3c; font-size: 22px;">ゲームをやめる？</h3>
+            <p style="font-size: 16px; font-weight: bold; line-height: 1.6; margin-bottom: 24px;">
+                ほんとうに タイトルに もどりますか？<br>
+                <span style="font-size: 13px; color: #7f8c8d; font-weight: normal;">※これまでの とくてんは きえてしまいます。</span>
+            </p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="modal-btn btn-yes" onclick="confirmQuit()">やめる</button>
+                <button class="modal-btn btn-no" onclick="resumeGame()">つづける</button>
+            </div>
+        </div>
+    </div>
+
 <script>
 const romanMap = {'ka':'か','ki':'き','ku':'く','ke':'け','ko':'こ','sa':'さ','si':'し','su':'す','se':'せ','so':'そ','ta':'た','ti':'ち','tu':'つ','te':'て','to':'と','na':'な','ni':'に','nu':'ぬ','ne':'ね','no':'の','ha':'は','hi':'ひ','hu':'ふ','he':'へ','ho':'ほ','ma':'ま','mi':'み','mu':'む','me':'め','mo':'も','ra':'ら','ri':'り','ru':'る','re':'れ','ro':'ろ'};
 const vowels = ['a','i','u','e','o'];
@@ -211,11 +288,15 @@ let config = {
 };
 
 let state = {
-    mode: '', score: 0, combo: 0, missCount: 0, clearCount: 0, 
+    mode: '', score: 0, combo: 0, 
+    missCount: 0,  // うちまちがい（タイピングミス）
+    thruCount: 0,  // うちのがした（見逃し・落下ミス）
+    clearCount: 0, // せいかいした数
     timer: 60, interval: null, spawnTimer: null, 
     vowelMisses: {a:0, i:0, u:0, e:0, o:0}, 
     vowelTotal: {a:0, i:0, u:0, e:0, o:0},
-    activeBlocks: [], startTime: 0, isGameActive: false
+    activeBlocks: [], startTime: 0, isGameActive: false,
+    isPaused: false // 一時停止用フラグ
 };
 
 // キーボード生成
@@ -248,17 +329,28 @@ function setTime(val) {
 
 function startGame(mode) {
     state = {
-        mode: mode, score: 0, combo: 0, missCount: 0, clearCount: 0, 
+        mode: mode, score: 0, combo: 0, 
+        missCount: 0, thruCount: 0, clearCount: 0, 
         timer: config.time, vowelMisses: {a:0, i:0, u:0, e:0, o:0}, 
         vowelTotal: {a:0, i:0, u:0, e:0, o:0},
-        activeBlocks: [], startTime: Date.now(), isGameActive: true
+        activeBlocks: [], startTime: Date.now(), isGameActive: true,
+        isPaused: false
     };
     
     switchScreen('game-screen');
     updateUI();
+    document.getElementById('quit-modal').style.display = 'none';
 
-    if(mode === 'time') {
+    startTimer();
+
+    gameLoop();
+    scheduleNextSpawn();
+}
+
+function startTimer() {
+    if(state.mode === 'time') {
         state.interval = setInterval(() => {
+            if(state.isPaused) return; // 一時停止中はタイマーカウントをストップ
             state.timer--;
             document.getElementById('timer-display').innerText = `のこり: ${state.timer}`;
             if(state.timer <= 0) endGame();
@@ -266,21 +358,23 @@ function startGame(mode) {
     } else {
         document.getElementById('timer-display').innerText = `NO MISS!`;
     }
-
-    gameLoop();
-    scheduleNextSpawn();
 }
 
 function scheduleNextSpawn() {
     if(!state.isGameActive) return;
+    
+    // 一時停止中の場合、少し待ってから再スケジュールをかける
+    if(state.isPaused) {
+        state.spawnTimer = setTimeout(scheduleNextSpawn, 500);
+        return;
+    }
+
     createBlock();
     
     let nextTime;
     if(config.speed === 'slow') {
-        // ゆっくり：常に一定間隔（2秒）
         nextTime = 2000;
     } else {
-        // はやさ設定に基づいた出現間隔
         let baseInterval = config.speed === 'fast' ? 1000 : 1500;
         nextTime = Math.max(800, baseInterval - (state.clearCount * 20));
     }
@@ -294,7 +388,12 @@ function createBlock() {
     const comboText = c + v;
     const el = document.createElement('div');
     el.className = `block target-${v}`;
-    el.innerHTML = `<div style="font-size:26px">${romanMap[comboText]}</div><div style="font-size:16px">${comboText}</div>`;
+    
+    el.innerHTML = `
+        <div style="font-size:16px; opacity: 0.95; line-height: 1.2; margin-top: 2px;">${comboText}</div>
+        <div style="font-size:26px; font-weight: bold; line-height: 1.2; margin-bottom: 2px;">${romanMap[comboText]}</div>
+    `;
+    
     el.style.left = (Math.random() * 360 + 10) + 'px';
     el.style.top = '-90px';
     document.getElementById('game-container').appendChild(el);
@@ -303,10 +402,8 @@ function createBlock() {
     
     let blockSpeed;
     if(config.speed === 'slow') {
-        // ゆっくり：常に一定の落下スピード、ランダム要素なし
         blockSpeed = 1.2;
     } else {
-        // ふつう・はやい：加速あり、わずかなランダム要素あり
         let baseSpeed = config.speed === 'fast' ? 3.2 : 2.0;
         blockSpeed = baseSpeed + (state.clearCount * 0.05) + Math.random();
     }
@@ -318,15 +415,16 @@ function createBlock() {
 }
 
 function gameLoop() {
-    if(!state.isGameActive) return;
+    if(!state.isGameActive || state.isPaused) return; // 一時停止中は描画ループを休止
 
     for(let i = state.activeBlocks.length - 1; i >= 0; i--) {
         const b = state.activeBlocks[i];
         b.y += b.speed;
         b.el.style.top = b.y + 'px';
 
-        if(b.y > 400) {
-            handleMiss(b.v);
+        // ミスゾーン（y >= 300）に達した瞬間、タイピング制限時間切れ（うちのがした）とする
+        if(b.y >= 300) {
+            handleThru(b.v, b.y);
             removeBlock(i);
             if(state.mode === 'nomiss') endGame();
         }
@@ -334,12 +432,22 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
+// ミスタイプ（押し間違い）の処理
 function handleMiss(v) {
     state.missCount++;
     state.combo = 0;
     state.vowelMisses[v]++;
     updateUI();
-    showEffect("MISS...", 350, "#e74c3c");
+    showEffect("うちまちがい！", 310, "#e67e22"); // オレンジ色のエフェクト
+}
+
+// 見逃し・落下（うちのがした）の処理
+function handleThru(v, blockY) {
+    state.thruCount++;
+    state.combo = 0;
+    state.vowelMisses[v]++;
+    updateUI();
+    showEffect("うちのがした！", 310, "#e74c3c"); // 赤色のエフェクト
 }
 
 function removeBlock(index) {
@@ -356,11 +464,45 @@ function showEffect(text, y, color) {
     eff.style.top = y + 'px';
     eff.style.color = color;
     document.getElementById('game-container').appendChild(eff);
-    setTimeout(() => eff.remove(), 500);
+    setTimeout(() => eff.remove(), 600);
+}
+
+// やめるボタン確認
+function showQuitConfirm() {
+    if(!state.isGameActive) return;
+    state.isPaused = true;
+    clearInterval(state.interval); // タイマーを一時停止
+    document.getElementById('quit-modal').style.display = 'flex';
+}
+
+// やめるのをやめて再開する
+function resumeGame() {
+    state.isPaused = false;
+    document.getElementById('quit-modal').style.display = 'none';
+    startTimer(); // タイマー再始動
+    gameLoop(); // ゲームループ再開
+}
+
+// ほんとうにやめる（タイトルへ）
+function confirmQuit() {
+    state.isGameActive = false;
+    state.isPaused = false;
+    document.getElementById('quit-modal').style.display = 'none';
+    clearInterval(state.interval);
+    clearTimeout(state.spawnTimer);
+    
+    // コンテナをきれいにクリーンアップ
+    const container = document.getElementById('game-container');
+    while(container.children.length > 1) {
+        if(container.lastChild.id !== 'judgment-zone') container.removeChild(container.lastChild);
+        else break;
+    }
+    
+    showTitle();
 }
 
 window.addEventListener('keydown', (e) => {
-    if(!state.isGameActive) return;
+    if(!state.isGameActive || state.isPaused) return; // 一時停止中はキー入力をブロック
     const key = e.key.toLowerCase();
     const keyEl = document.getElementById(`key-${key}`);
     
@@ -370,24 +512,22 @@ window.addEventListener('keydown', (e) => {
     }
 
     if(vowels.includes(key)) {
-        const hitIdx = state.activeBlocks.findIndex(b => b.v === key && b.y > 270 && b.y < 380);
+        // ミスゾーン（y >= 300）に入る前の、画面内にあるブロックを対象とする
+        const hitIdx = state.activeBlocks.findIndex(b => b.v === key && b.y > -90 && b.y < 300);
         
         if(hitIdx !== -1) {
             const b = state.activeBlocks[hitIdx];
             let points = 100;
-            let msg = "GOOD";
-            
-            if(b.y > 300 && b.y < 350) {
-                points = 200;
-                msg = "PERFECT!!";
-            }
+            let msg = "GOOD!";
+            let textColor = "#3498db"; 
 
             state.combo++;
             state.score += points + (state.combo * 10);
             state.clearCount++;
-            showEffect(msg, b.y, "#2ecc71");
+            showEffect(msg, b.y, textColor);
             removeBlock(hitIdx);
         } else {
+            // 対象となる母音がミスゾーンより上のエリアに存在しないのに押した場合
             handleMiss(key);
             if(state.mode === 'nomiss') endGame();
         }
@@ -425,10 +565,13 @@ function showResult() {
     document.getElementById('result-title').innerText = 
         state.mode === 'time' ? `${config.time}びょう チャレンジ (${speedLabel})` : "のーみす チャレンジ けっか";
 
+    // 「うちのがしたもじ」へと表記を変更
     stats.innerHTML = `
-        <div class="stat-row"><span>スコア</span><b>${state.score}</b></div>
-        <div class="stat-row"><span>クリア数</span><b>${state.clearCount}もん</b></div>
-        ${state.mode === 'nomiss' ? `<div class="stat-row"><span>タイム</span><b>${playTime}びょう</b></div>` : ""}
+        <div class="stat-row"><span>とくてん（スコア）</span><b>${state.score}</b></div>
+        <div class="stat-row" style="color:#2ecc71;"><span>せいかい（うてた数）</span><b>${state.clearCount}もん</b></div>
+        <div class="stat-row" style="color:#e67e22;"><span>うちまちがい（キーミス）</span><b>${state.missCount}かい</b></div>
+        <div class="stat-row" style="color:#e74c3c;"><span>うちのがしたもじ</span><b>${state.thruCount}もん</b></div>
+        ${state.mode === 'nomiss' ? `<div class="stat-row"><span>あそんだ じかん</span><b>${playTime}びょう</b></div>` : ""}
     `;
 
     analysis.innerHTML = `<h3 style="margin-bottom:10px">にがてな「ぼいん」をチェック！</h3>`;
@@ -439,8 +582,8 @@ function showResult() {
         
         analysis.innerHTML += `
             <div style="display:flex; justify-content:space-between; font-size:14px">
-                <span>${v.toUpperCase()} (ミス: ${miss})</span>
-                <span>${Math.round(100 - missRate)}% 成功</span>
+                <span>${v.toUpperCase()} (うてなかった数: ${miss})</span>
+                <span>${Math.round(100 - missRate)}% せいかい</span>
             </div>
             <div class="v-bar-container">
                 <div class="v-bar target-${v}" id="bar-${v}"></div>
