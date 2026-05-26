@@ -2,14 +2,21 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ローマじ・ますたー・くえすと Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ローマじ・AIUEO</title>
     <style>
         :root {
-            --color-a: #ff5e57; --color-i: #48c1fb; --color-u: #feb72b;
-            --color-e: #2ed573; --color-o: #a55eea;
+            /* 左右の指使いに対応した8色のカラーパレット */
+            --f-pinky-l: #ff5e57;  /* 左手小指 (Q, A, Z) */
+            --f-ring-l: #f1c40f;   /* 左手薬指 (W, S, X) */
+            --f-middle-l: #2ecc71; /* 左手中指 (E, D, C) */
+            --f-index-l: #00d2d3;  /* 左手人差し指 (R, T, F, G, V, B) */
+            --f-index-r: #3867d6;  /* 右手人差し指 (Y, U, H, J, N, M) */
+            --f-middle-r: #20bf6b; /* 右手中指 (I, K) */
+            --f-ring-r: #ff9f43;   /* 右手薬指 (O, L) */
+            --f-pinky-r: #fd79a8;  /* 右手小指 (P) */
+
             --bg-color: #f8f9fa;
-            --f-pinky: #ff6b81; --f-ring: #2ed573; --f-middle: #54a0ff; --f-index: #ff9f43;
             --shadow: 0 4px 6px rgba(0,0,0,0.1);
             --primary: #3498db;
         }
@@ -19,6 +26,9 @@
             font-family: 'Hiragino Kaku Gothic Pro', 'ヒラギノ角ゴ Pro W3', 'Meiryo', sans-serif;
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             min-height: 100vh; margin: 0; overflow: hidden; color: #2c3e50;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
         }
         
         .screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 800px; animation: fadeIn 0.3s ease-out; }
@@ -51,6 +61,7 @@
             cursor: pointer;
             font-weight: bold;
             transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
         }
         .toggle-btn.selected {
             background: var(--primary);
@@ -60,16 +71,43 @@
             transform: translateY(-2px);
         }
 
+        /* あそびかた説明カード */
+        .howto-card-simple {
+            background: #e8f4fd; 
+            padding: 15px; 
+            border-radius: 16px; 
+            margin-bottom: 20px; 
+            border: 2px dashed var(--primary);
+            width: 90%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+        .howto-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2980b9;
+            margin-bottom: 8px;
+            display: block;
+            text-align: center;
+        }
+        .howto-text {
+            font-size: 15px;
+            margin: 0;
+            line-height: 1.6;
+            text-align: left;
+            font-weight: bold;
+        }
+
         /* ボタン共通 */
         .menu-btn { 
             width: 280px; padding: 16px; margin: 10px; font-size: 20px; font-weight: bold; 
             cursor: pointer; border: none; border-radius: 16px; color: white;
             transition: all 0.2s; box-shadow: 0 6px 0 rgba(0,0,0,0.2); position: relative;
+            -webkit-tap-highlight-color: transparent;
         }
         .menu-btn:active { transform: translateY(4px); box-shadow: none; }
         .btn-time { background: #3498db; }
         .btn-nomiss { background: #e67e22; }
-        .btn-howto { background: #2ecc71; }
         .btn-back { background: #95a5a6; width: 200px; margin-top: 30px; }
 
         /* ゲーム画面 */
@@ -87,7 +125,7 @@
         }
 
         #judgment-zone::after {
-            content: '▲ ここから下は ミスゾーン ▲';
+            content: '▲ ここから下は うちのがし ▲';
             position: absolute;
             right: 15px;
             top: 6px;
@@ -112,26 +150,53 @@
         }
         @keyframes floatUp { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-50px) scale(0.8); } }
 
-        /* キーボード */
-        #keyboard-area { margin-top: 20px; background: #dfe4ea; padding: 12px; border-radius: 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
-        .key-row { display: flex; justify-content: center; margin-bottom: 6px; }
-        .key { 
-            width: 38px; height: 45px; background: #fff; border-radius: 8px; margin: 3px; 
-            display: flex; align-items: center; justify-content: center; font-size: 14px; 
-            font-weight: bold; border-bottom: 4px solid #bdc3c7; transition: all 0.1s;
+        /* キーボードエリアの最適化 */
+        #keyboard-area { 
+            margin-top: 20px; 
+            background: #dfe4ea; 
+            padding: 12px; 
+            border-radius: 15px; 
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
         }
-        .f-pinky { border-top: 3px solid var(--f-pinky); } 
-        .f-ring { border-top: 3px solid var(--f-ring); } 
-        .f-middle { border-top: 3px solid var(--f-middle); } 
-        .f-index { border-top: 3px solid var(--f-index); }
+        .key-row { display: flex; justify-content: center; margin-bottom: 6px; width: 100%; }
+        .key { 
+            width: clamp(28px, 6vw, 42px); 
+            height: clamp(35px, 8vw, 48px); 
+            background: #fff; 
+            border-radius: 8px; 
+            margin: 2px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: clamp(11px, 2.5vw, 15px); 
+            font-weight: bold; 
+            transition: all 0.1s;
+            box-sizing: border-box;
+            background-color: #ffffff;
+            color: #2c3e50;
+        }
+
+        /* 左右指別の枠線配色（ホームポジション準拠） */
+        .f-pinky-l  { border: 3px solid var(--f-pinky-l); }
+        .f-ring-l   { border: 3px solid var(--f-ring-l); }
+        .f-middle-l { border: 3px solid var(--f-middle-l); }
+        .f-index-l  { border: 3px solid var(--f-index-l); }
+        .f-index-r  { border: 3px solid var(--f-index-r); }
+        .f-middle-r { border: 3px solid var(--f-middle-r); }
+        .f-ring-r   { border: 3px solid var(--f-ring-r); }
+        .f-pinky-r  { border: 3px solid var(--f-pinky-r); }
+
+        /* 各母音キー：枠線色と合わせた塗りつぶしカラー */
+        .target-a { background: var(--f-pinky-l) !important; color: white !important; border-color: var(--f-pinky-l) !important; }
+        .target-i { background: var(--f-middle-r) !important; color: white !important; border-color: var(--f-middle-r) !important; }
+        .target-u { background: var(--f-index-r) !important; color: white !important; border-color: var(--f-index-r) !important; }
+        .target-e { background: var(--f-middle-l) !important; color: white !important; border-color: var(--f-middle-l) !important; }
+        .target-o { background: var(--f-ring-r) !important; color: white !important; border-color: var(--f-ring-r) !important; }
         
-        .target-a { background: var(--color-a) !important; color: white; }
-        .target-i { background: var(--color-i) !important; color: white; }
-        .target-u { background: var(--color-u) !important; color: white; }
-        .target-e { background: var(--color-e) !important; color: white; }
-        .target-o { background: var(--color-o) !important; color: white; }
-        
-        .pressed { transform: translateY(2px); border-bottom-width: 1px; background: #95a5a6 !important; color: white; }
+        .pressed { transform: translateY(2px); background: #7f8c8d !important; color: white !important; border-color: #7f8c8d !important; }
 
         #ui-layer { 
             width: 450px; 
@@ -157,6 +222,7 @@
             cursor: pointer;
             box-shadow: 0 4px 0 #7f8c8d;
             transition: all 0.1s;
+            -webkit-tap-highlight-color: transparent;
         }
         .quit-btn:active {
             transform: translateY(2px);
@@ -196,7 +262,15 @@
 
     <!-- タイトル画面 -->
     <div id="title-screen" class="screen active">
-        <h1>ローマじクエスト</h1>
+        <h1>ローマじ AIUEO</h1>
+
+        <!-- やさしいあそびかた説明カード -->
+        <div class="howto-card-simple">
+            <span class="howto-title">★ あそびかた ★</span>
+            <p class="howto-text">
+                おちてくる ひらがなの <span style="color: var(--f-pinky-l);">『あ・い・う・え・お』（ぼいん）</span> だけを、キーボードで うつ ゲームだよ！
+            </p>
+        </div>
         
         <div class="settings-container">
             <div class="setting-group">
@@ -218,20 +292,8 @@
             </div>
         </div>
 
-        <button class="menu-btn btn-time" onclick="startGame('time')">タイムチャレンジ</button>
-        <button class="menu-btn btn-nomiss" onclick="startGame('nomiss')">のーみす チャレンジ</button>
-        <button class="menu-btn btn-howto" onclick="switchScreen('howto-screen')">あそびかた</button>
-    </div>
-
-    <!-- あそびかた -->
-    <div id="howto-screen" class="screen">
-        <div style="background: white; padding: 30px; border-radius: 20px; max-width: 500px; box-shadow: var(--shadow);">
-            <h2 style="color:#2ecc71; margin-top:0;">あそびかた</h2>
-            <p><strong>1. おちてくる文字を打とう！</strong><br>ひらがなが見えたら、そのローマじ（母音）をキーボードで打ってね。</p>
-            <p><strong>2. ミスゾーンに入る前に打とう！</strong><br>画面の下にある赤点線の「ミスゾーン」に入ってしまうと、もじを うちのがして ミスになるよ！</p>
-            <p><strong>3. ローマ字を覚えていると超有利！</strong><br>ひらがな（下）が先に見えるよ。ローマじ（上）がみえる前にうてると、とってもカッコいいね！</p>
-            <button class="menu-btn btn-back" onclick="showTitle()">もどる</button>
-        </div>
+        <button class="menu-btn btn-time" onclick="startGame('time')">はじめる</button>
+        <button class="menu-btn btn-nomiss" onclick="startGame('nomiss')">ノーミス モード</button>
     </div>
 
     <!-- ゲーム画面 -->
@@ -277,9 +339,19 @@
 const romanMap = {'ka':'か','ki':'き','ku':'く','ke':'け','ko':'こ','sa':'さ','si':'し','su':'す','se':'せ','so':'そ','ta':'た','ti':'ち','tu':'つ','te':'て','to':'と','na':'な','ni':'に','nu':'ぬ','ne':'ね','no':'の','ha':'は','hi':'ひ','hu':'ふ','he':'へ','ho':'ほ','ma':'ま','mi':'み','mu':'む','me':'め','mo':'も','ra':'ら','ri':'り','ru':'る','re':'れ','ro':'ろ'};
 const vowels = ['a','i','u','e','o'];
 const consonants = ['k','s','t','n','h','m','r'];
-const fingerMap = {
-    'q':'f-pinky','a':'f-pinky','z':'f-pinky','w':'f-ring','s':'f-ring','x':'f-ring','e':'f-middle','d':'f-middle','c':'f-middle','r':'f-index','t':'f-index','f':'f-index','g':'f-index','v':'f-index','b':'f-index','y':'f-index','u':'f-index','h':'f-index','j':'f-index','n':'f-index','m':'f-index','i':'f-middle','k':'f-middle','o':'f-ring','l':'f-ring','p':'f-pinky'
+
+// ホームポジション8色に合わせたキーマッピング
+const fingerClassMap = {
+    'q': 'f-pinky-l', 'a': 'f-pinky-l', 'z': 'f-pinky-l',
+    'w': 'f-ring-l', 's': 'f-ring-l', 'x': 'f-ring-l',
+    'e': 'f-middle-l', 'd': 'f-middle-l', 'c': 'f-middle-l',
+    'r': 'f-index-l', 't': 'f-index-l', 'f': 'f-index-l', 'g': 'f-index-l', 'v': 'f-index-l', 'b': 'f-index-l',
+    'y': 'f-index-r', 'u': 'f-index-r', 'h': 'f-index-r', 'j': 'f-index-r', 'n': 'f-index-r', 'm': 'f-index-r',
+    'i': 'f-middle-r', 'k': 'f-middle-r',
+    'o': 'f-ring-r', 'l': 'f-ring-r',
+    'p': 'f-pinky-r'
 };
+
 const kbLayout = [["Q","W","E","R","T","Y","U","I","O","P"],["A","S","D","F","G","H","J","K","L"],["Z","X","C","V","B","N","M"]];
 
 let config = {
@@ -288,7 +360,7 @@ let config = {
 };
 
 let state = {
-    mode: '', score: 0, combo: 0, 
+    mode: '', score: 0, combo: 0, maxCombo: 0,
     missCount: 0,  // うちまちがい（タイピングミス）
     thruCount: 0,  // うちのがした（見逃し・落下ミス）
     clearCount: 0, // せいかいした数
@@ -306,7 +378,7 @@ kbLayout.forEach(row => {
     row.forEach(k => {
         const char = k.toLowerCase();
         const div = document.createElement('div');
-        div.className = `key ${fingerMap[char] || ''}`;
+        div.className = `key ${fingerClassMap[char] || ''}`;
         div.id = `key-${char}`;
         if(vowels.includes(char)) div.classList.add(`target-${char}`);
         div.innerText = k;
@@ -329,7 +401,7 @@ function setTime(val) {
 
 function startGame(mode) {
     state = {
-        mode: mode, score: 0, combo: 0, 
+        mode: mode, score: 0, combo: 0, maxCombo: 0,
         missCount: 0, thruCount: 0, clearCount: 0, 
         timer: config.time, vowelMisses: {a:0, i:0, u:0, e:0, o:0}, 
         vowelTotal: {a:0, i:0, u:0, e:0, o:0},
@@ -356,7 +428,7 @@ function startTimer() {
             if(state.timer <= 0) endGame();
         }, 1000);
     } else {
-        document.getElementById('timer-display').innerText = `NO MISS!`;
+        document.getElementById('timer-display').innerText = `ノーミス！`;
     }
 }
 
@@ -389,8 +461,9 @@ function createBlock() {
     const el = document.createElement('div');
     el.className = `block target-${v}`;
     
+    // ローマ字部分（comboText）を大文字（.toUpperCase()）に変更
     el.innerHTML = `
-        <div style="font-size:16px; opacity: 0.95; line-height: 1.2; margin-top: 2px;">${comboText}</div>
+        <div style="font-size:16px; opacity: 0.95; line-height: 1.2; margin-top: 2px;">${comboText.toUpperCase()}</div>
         <div style="font-size:26px; font-weight: bold; line-height: 1.2; margin-bottom: 2px;">${romanMap[comboText]}</div>
     `;
     
@@ -414,6 +487,7 @@ function createBlock() {
     });
 }
 
+// ゲームループ
 function gameLoop() {
     if(!state.isGameActive || state.isPaused) return; // 一時停止中は描画ループを休止
 
@@ -522,6 +596,7 @@ window.addEventListener('keydown', (e) => {
             let textColor = "#3498db"; 
 
             state.combo++;
+            state.maxCombo = Math.max(state.maxCombo, state.combo); // 最大連続正解（コンボ）を記録
             state.score += points + (state.combo * 10);
             state.clearCount++;
             showEffect(msg, b.y, textColor);
@@ -538,7 +613,7 @@ window.addEventListener('keydown', (e) => {
 function updateUI() {
     document.getElementById('score-display').innerText = state.score.toString().padStart(5, '0');
     const comboEl = document.getElementById('combo-display');
-    comboEl.innerText = state.combo > 1 ? `${state.combo} COMBO!` : "";
+    comboEl.innerText = state.combo > 1 ? `${state.combo} コンボ!` : "";
 }
 
 function endGame() {
@@ -563,12 +638,13 @@ function showResult() {
 
     const speedLabel = config.speed === 'slow' ? 'ゆっくり' : config.speed === 'fast' ? 'はやい' : 'ふつう';
     document.getElementById('result-title').innerText = 
-        state.mode === 'time' ? `${config.time}びょう チャレンジ (${speedLabel})` : "のーみす チャレンジ けっか";
+        state.mode === 'time' ? `${config.time}びょう チャレンジ (${speedLabel})` : "ノーミス モード けっか";
 
-    // 「うちのがしたもじ」へと表記を変更
+    // 「つづいた かず」をリザルト表示へ追加
     stats.innerHTML = `
         <div class="stat-row"><span>とくてん（スコア）</span><b>${state.score}</b></div>
         <div class="stat-row" style="color:#2ecc71;"><span>せいかい（うてた数）</span><b>${state.clearCount}もん</b></div>
+        <div class="stat-row" style="color:#3498db;"><span>つづいた かず（コンボ）</span><b>${state.maxCombo}こ</b></div>
         <div class="stat-row" style="color:#e67e22;"><span>うちまちがい（キーミス）</span><b>${state.missCount}かい</b></div>
         <div class="stat-row" style="color:#e74c3c;"><span>うちのがしたもじ</span><b>${state.thruCount}もん</b></div>
         ${state.mode === 'nomiss' ? `<div class="stat-row"><span>あそんだ じかん</span><b>${playTime}びょう</b></div>` : ""}
