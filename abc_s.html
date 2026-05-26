@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>アルファベットAa-Zz</title>
+    <title>アルファベットクエスト</title>
     <style>
         :root {
             --primary: #3498db; --success: #2ecc71; --gold: #f1c40f; --miss: #e74c3c; --bg: #f8fbff;
@@ -328,10 +328,10 @@
 <body>
 
     <div id="start-screen" class="overlay">
-        <div class="main-title">アルファベット Aa-Zz</div>
+        <div class="main-title">アルファベットクエスト</div>
         <div class="sub-title">おおもじ・こもじをあわせよう</div>
         <div class="settings-area">
-            <!-- ➔ 改良：遊ぶ前の問題数えらび -->
+            <!-- 遊ぶ前の問題数えらび -->
             <div style="font-size: 15px; font-weight: bold; color: #555; margin-bottom: 2px; text-align: left; padding-left: 5px;">もんだいのかず：</div>
             <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 10px; width: 100%;">
                 <button id="qNum5" class="toggle-btn active-q" onclick="setQuestionNum(5)" style="flex:1;">5もん</button>
@@ -341,7 +341,7 @@
             <button id="soundMasterBtn" class="toggle-btn" onclick="toggleSoundMaster()">[ 音・こえ: ON ]</button>
             <button id="voiceModeBtn" class="toggle-btn" onclick="toggleVoiceMode()">[ こえの しゅるい: 日本語よみ ]</button>
         </div>
-        <button class="btn" onclick="initGame()">はじめる</button>
+        <button class="btn" onclick="initGame()">ぼうけん を はじめる</button>
     </div>
 
     <div class="collection-container" id="collectionContainer">
@@ -379,7 +379,11 @@
 
     <div id="result-screen" class="overlay" style="display:none;">
         <div id="result-content"></div>
-        <button class="btn" onclick="resetGame()">もういちど あそぶ</button>
+        <!-- ➔ 改良：もういちど遊ぶボタンに加え、はじめの画面（タイトル）に戻るボタンエリアを新設 -->
+        <div style="display: flex; gap: 12px; justify-content: center; width: 90%; max-width: 440px; margin-top: 15px;">
+            <button class="btn" onclick="resetGame()" style="flex: 1; font-size: clamp(16px, 4vw, 20px); padding: 12px 20px;">もういちど あそぶ</button>
+            <button class="btn" onclick="goToStartScreen()" style="flex: 1; font-size: clamp(16px, 4vw, 20px); padding: 12px 20px; background: #7f8c8d; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">はじめの がめん</button>
+        </div>
     </div>
 
     <script>
@@ -443,7 +447,7 @@
 
         const alpha = Object.keys(charData);
 
-        // ➔ 改良：問題数の変更ロジック
+        // 問題数の変更ロジック
         function setQuestionNum(num) {
             totalQuestionsLimit = num;
             document.getElementById('qNum5').classList.toggle('active-q', num === 5);
@@ -574,7 +578,7 @@
             document.getElementById('start-screen').style.display = 'none';
             startTime = Date.now(); 
 
-            // ➔ 改良：今回のゲームセッションで取り組む問題を抽出
+            // 今回のゲームセッションで取り組む問題を抽出
             gameSessionList = [...alpha].sort(() => Math.random() - 0.5).slice(0, totalQuestionsLimit);
             attemptsPerChar = {};
             gameSessionList.forEach(c => {
@@ -641,7 +645,7 @@
                     }
                 });
             } else if (droppedChar !== targetChar) {
-                // ➔ 改良：ミスではなく、ポジティブに「えらびなおし数（attempts）」をインクリメント
+                // ミスではなく、ポジティブに「えらびなおし数（attempts）」をインクリメント
                 attemptsPerChar[targetChar] = (attemptsPerChar[targetChar] || 0) + 1;
                 sfx.ng(); 
                 document.getElementById('status-msg').textContent = "ちがう みたい！"; 
@@ -665,7 +669,7 @@
             roundSolved = 0;
             startTime = Date.now();
             
-            // ➔ 新たにセッション問題と選択の初期化
+            // 新たにセッション問題と選択の初期化
             gameSessionList = [...alpha].sort(() => Math.random() - 0.5).slice(0, totalQuestionsLimit);
             attemptsPerChar = {};
             gameSessionList.forEach(c => {
@@ -674,6 +678,28 @@
             
             renderCollectionMap();
             startRound();
+        }
+
+        // ➔ 新設：はじめの画面に戻るリセット処理
+        function goToStartScreen() {
+            // リザルト画面を非表示にしてスタート画面を表示
+            document.getElementById('result-screen').style.display = 'none';
+            document.getElementById('start-screen').style.display = 'flex';
+            
+            // 状態の完全初期化
+            cleared.clear();
+            roundSolved = 0;
+            gameSessionList = [];
+            attemptsPerChar = {};
+            
+            // ボード上のカード表示をお掃除
+            document.getElementById('sources').innerHTML = "";
+            document.getElementById('targets').innerHTML = "";
+            document.getElementById('nextBtn').classList.remove('show');
+            document.getElementById('status-msg').textContent = "おおもじ を うえに はこぼう！";
+            document.getElementById('status-msg').style.color = "#7f8c8d";
+            
+            renderCollectionMap();
         }
 
         function startRound() {
@@ -823,7 +849,7 @@
             }
         }
 
-        // ➔ 改良：リザルト画面に「できた/えらびなおし」のポジティブな％ドーナツグラフと、にがて文字の表示を追加
+        // リザルト画面に「できた/えらびなおし」のポジティブな％ドーナツグラフと、にがて文字の表示を追加
         function showResult() {
             document.getElementById('nextBtn').classList.remove('show');
             const time = Math.floor((Date.now() - startTime) / 1000);
@@ -873,7 +899,7 @@
             }
 
             document.getElementById('result-content').innerHTML = `
-                <div style="font-size:32px; font-weight:bold; color:var(--gold); margin-bottom:10px;">*** ${perfectAll ? 'PERFECT!' : 'CLEAR!'} ***</div>
+                <div style="font-size:32px; font-weight:bold; color:var(--gold); margin-bottom:10px;">*** ${perfectAll ? 'パーフェクト' : 'クリア'} ***</div>
                 <div class="stats-card">
                     <!-- ポジティブビジュアル：ドーナツグラフ（conic-gradientを利用） -->
                     <div class="donut-chart" style="background: conic-gradient(var(--success) 0% ${perfectRatio}%, var(--retry) ${perfectRatio}% 100%);">
