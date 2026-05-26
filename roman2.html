@@ -43,20 +43,33 @@
         .opt-btn { background: #eee; border: 2px solid #ccc; flex: 1; padding: 10px; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .opt-btn.selected { background: var(--primary); color: white; border-color: #2980b9; box-shadow: 0 4px 0 #2980b9; transform: translateY(-2px); }
 
-        .btn-start { background: var(--success); color: white; font-size: 24px; font-weight: bold; border: none; width: 100%; padding: 15px; border-radius: 50px; cursor: pointer; margin-top: 10px; box-shadow: 0 5px 0 #27ae60; }
-        .btn-start:active { transform: translateY(3px); box-shadow: none; }
+        .btn-start { color: white; font-size: 22px; font-weight: bold; border: none; width: 100%; padding: 14px; border-radius: 50px; cursor: pointer; transition: 0.1s; }
+        .btn-start:active { transform: translateY(3px); box-shadow: none !important; }
 
         /* げーむのがめん */
         #game-container { 
-            position: relative; width: 450px; height: 380px; 
+            position: relative; width: 450px; height: 400px; 
             background: #fff; border: 6px solid #333; border-radius: 20px; 
             overflow: hidden; box-shadow: var(--shadow);
         }
 
+        /* ミスゾーンのスタイル */
         #judgment-zone { 
-            position: absolute; bottom: 30px; width: 100%; height: 70px; 
-            background: rgba(46, 213, 115, 0.1); border-top: 3px dashed #2ecc71; 
-            border-bottom: 3px dashed #2ecc71; z-index: 1; 
+            position: absolute; bottom: 0; width: 100%; height: 100px; 
+            background: rgba(231, 76, 60, 0.12); border-top: 3px dashed #e74c3c; 
+            z-index: 1; 
+        }
+
+        #judgment-zone::after {
+            content: '▲ ここからしたは うちのがし ▲';
+            position: absolute;
+            right: 15px;
+            top: 6px;
+            font-size: 11px;
+            color: #e74c3c;
+            font-weight: bold;
+            opacity: 0.9;
+            letter-spacing: 0.5px;
         }
 
         .block { 
@@ -68,10 +81,11 @@
         .block.waiting-vowel { border: 4px solid #fff; box-shadow: 0 0 15px rgba(255,255,255,0.8); transform: scale(1.1); }
 
         .hit-effect {
-            position: absolute; font-size: 24px; font-weight: bold; color: #2ecc71;
-            pointer-events: none; animation: floatUp 0.5s forwards; z-index: 10;
+            position: absolute; font-size: 22px; font-weight: bold;
+            pointer-events: none; animation: floatUp 0.6s forwards; z-index: 10;
+            text-shadow: 2px 2px 0 white;
         }
-        @keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-40px); } }
+        @keyframes floatUp { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-50px) scale(0.8); } }
 
         /* きーぼーど */
         #keyboard-area { margin-top: 15px; background: #dfe4ea; padding: 10px; border-radius: 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
@@ -88,9 +102,56 @@
         
         .pressed { transform: translateY(2px); border-bottom-width: 1px; background: #95a5a6 !important; color: white; }
 
-        #ui-layer { width: 450px; display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 20px; font-weight: bold; }
+        #ui-layer { 
+            width: 450px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 5px; 
+            font-size: 20px; 
+            font-weight: bold; 
+        }
         #combo-display { color: #e67e22; font-size: 24px; text-shadow: 1px 1px 0 white; min-height: 1.5em; text-align: center; width: 100%; }
         #timer-display { color: #e74c3c; }
+
+        /* やめるボタン */
+        .quit-btn {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #7f8c8d;
+            transition: all 0.1s;
+        }
+        .quit-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #7f8c8d;
+        }
+
+        /* 一時停止ダイアログ */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center;
+            max-width: 350px; width: 90%; animation: popIn 0.2s ease-out;
+        }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-btn {
+            padding: 12px 20px; border: none; border-radius: 12px;
+            font-weight: bold; cursor: pointer; font-size: 16px; flex: 1;
+            transition: transform 0.1s;
+        }
+        .modal-btn:active { transform: scale(0.95); }
+        .btn-yes { background: #e74c3c; color: white; box-shadow: 0 4px 0 #c0392b; }
+        .btn-no { background: #2ecc71; color: white; box-shadow: 0 4px 0 #27ae60; }
 
         /* けっかがめん */
         .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 18px; }
@@ -137,15 +198,20 @@
             </div>
 
             <div class="item">
-                <label>3. あそぶ じかん</label>
+                <label>3. あそぶ じかん（タイムチャレンジ用）</label>
                 <div class="btn-group">
                     <button class="opt-btn time-opt" onclick="setConfig('time', 30, this)">30びょう</button>
                     <button class="opt-btn time-opt selected" onclick="setConfig('time', 60, this)">60びょう</button>
                     <button class="opt-btn time-opt" onclick="setConfig('time', 90, this)">90びょう</button>
                 </div>
+                <div style="font-size: 11px; color: #7f8c8d; margin-top: 4px; font-weight: normal;">※のーみす チャレンジのときは、じかんは かんけいないよ！</div>
             </div>
 
-            <button class="btn-start" onclick="startGame()">しゅっぱつ！</button>
+            <!-- モード選択の2つのしゅっぱつボタン -->
+            <div style="margin-top: 20px;">
+                <button class="btn-start" style="background: var(--primary); box-shadow: 0 5px 0 #2980b9;" onclick="startGame('time')">タイムチャレンジ！</button>
+                <button class="btn-start" style="background: #e67e22; box-shadow: 0 5px 0 #d35400; margin-top: 12px;" onclick="startGame('nomiss')">のーみす チャレンジ！</button>
+            </div>
         </div>
     </div>
 
@@ -153,6 +219,7 @@
     <div id="game-screen" class="screen">
         <div id="ui-layer">
             <div id="timer-display">のこり: 60</div>
+            <button class="quit-btn" onclick="showQuitConfirm()">やめる</button>
             <div id="score-display">00000</div>
         </div>
         <div id="combo-display"></div>
@@ -165,11 +232,13 @@
     <!-- けっかがめん -->
     <div id="result-screen" class="screen">
         <div class="card" style="text-align:center; max-height: 90vh; overflow-y: auto;">
-            <h2 style="margin-top:0; color: #2c3e50;">しんだん けっか</h2>
+            <h2 id="result-title" style="margin-top:0; color: #2c3e50;">しんだん けっか</h2>
             
             <div class="stat-row"><span>てんすう：</span><strong id="res-score">0</strong></div>
-            <div class="stat-row"><span>あてた かず：</span><strong id="res-chars">0</strong></div>
-            <div class="stat-row"><span>まちがい：</span><strong id="res-misses" style="color:var(--danger)">0</strong></div>
+            <div id="res-time-row" class="stat-row"><span>あそんだ じかん：</span><strong id="res-time">0 びょう</strong></div>
+            <div class="stat-row"><span>あてた かず：</span><strong id="res-chars">0 こ</strong></div>
+            <div class="stat-row" style="color:#e67e22;"><span>うちまちがい：</span><strong id="res-misses">0 かい</strong></div>
+            <div class="stat-row" style="color:var(--danger)"><span>うちのがした：</span><strong id="res-thru">0 こ</strong></div>
 
             <div class="analysis-title">あ・い・う・え・お の とくいど</div>
             <div id="vowel-stats" class="stat-grid"></div>
@@ -185,6 +254,21 @@
             <div id="feedback-text" style="background:#fdf2f2; padding:15px; margin:15px 0; border-radius:10px; font-weight:bold; font-size:14px; line-height:1.5;"></div>
             
             <button class="btn-start" style="background:#34495e; box-shadow: 0 5px 0 #2c3e50;" onclick="location.reload()">タイトルに もどる</button>
+        </div>
+    </div>
+
+    <!-- やめるかくにんモーダル -->
+    <div id="quit-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3 style="margin-top: 0; color: #e74c3c; font-size: 22px;">ゲームを やめる？</h3>
+            <p style="font-size: 16px; font-weight: bold; line-height: 1.6; margin-bottom: 24px;">
+                ほんとうに タイトルに もどりますか？<br>
+                <span style="font-size: 13px; color: #7f8c8d; font-weight: normal;">※これまでの てんすうは きえてしまいます。</span>
+            </p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button class="modal-btn btn-yes" onclick="confirmQuit()">やめる</button>
+                <button class="modal-btn btn-no" onclick="resumeGame()">つづける</button>
+            </div>
         </div>
     </div>
 
@@ -204,9 +288,13 @@ const kbLayout = [["Q","W","E","R","T","Y","U","I","O","P"],["A","S","D","F","G"
 
 let config = { speed: 1.5, time: 60, selectedRows: [] };
 let state = { 
-    score:0, timer:0, combo:0, clearCount:0, missCount:0, 
+    mode: 'time', // 'time' または 'nomiss'
+    score:0, timer:0, combo:0, clearCount:0, 
+    missCount:0, // うちまちがい（キーミス）
+    thruCount:0, // うちのがした（見逃し・落下ミス）
     activeBlocks:[], interval:null, spawnInterval:null,
-    missMap:{}, stats: {}
+    missMap:{}, stats: {}, isPaused: false,
+    elapsedTime: 0 // のーみす用カウントアップ
 };
 
 // きーぼーどをつくる
@@ -237,27 +325,50 @@ function toggleAllCheckboxes() {
     checks.forEach(c => c.checked = !allChecked);
 }
 
-function startGame() {
+function startGame(mode = 'time') {
     config.selectedRows = Array.from(document.querySelectorAll('#consonant-options input:checked')).map(c => c.value);
     if(config.selectedRows.length === 0) { alert('れんしゅうする ぎょうを えらんでね！'); return; }
 
     state = { 
-        score:0, timer:config.time, combo:0, clearCount:0, missCount:0,
+        mode: mode,
+        score:0, timer:config.time, combo:0, clearCount:0, missCount:0, thruCount:0,
         activeBlocks:[], interval:null, spawnInterval:null,
-        missMap:{}, stats: {} 
+        missMap:{}, stats: {}, isPaused: false,
+        elapsedTime: 0
     };
     
     switchScreen('game-screen');
     updateUI();
+    document.getElementById('quit-modal').style.display = 'none';
 
-    state.interval = setInterval(() => {
-        state.timer--;
+    // モードごとの初期表示
+    if (state.mode === 'nomiss') {
+        document.getElementById('timer-display').innerText = `のーみす！ 0びょう`;
+    } else {
         document.getElementById('timer-display').innerText = `のこり: ${state.timer}`;
-        if(state.timer <= 0) endLevel();
-    }, 1000);
+    }
+
+    startTimer();
     
     gameLoop();
-    state.spawnInterval = setInterval(createBlock, 2200 / (config.speed * 0.8));
+    state.spawnInterval = setInterval(() => {
+        if (!state.isPaused) createBlock();
+    }, 2200 / (config.speed * 0.8));
+}
+
+function startTimer() {
+    state.interval = setInterval(() => {
+        if (state.isPaused) return; // やめてる（ぽーず）あいだは カウントをとめる
+        
+        if (state.mode === 'time') {
+            state.timer--;
+            document.getElementById('timer-display').innerText = `のこり: ${state.timer}`;
+            if(state.timer <= 0) endLevel();
+        } else {
+            state.elapsedTime++;
+            document.getElementById('timer-display').innerText = `のーみす！ ${state.elapsedTime}びょう`;
+        }
+    }, 1000);
 }
 
 function createBlock() {
@@ -269,7 +380,13 @@ function createBlock() {
     const el = document.createElement('div');
     el.className = `block`;
     el.style.backgroundColor = {a:'#ff5e57', i:'#48c1fb', u:'#feb72b', e:'#2ed573', o:'#a55eea'}[v];
-    el.innerHTML = `<span style="font-size:26px">${jpMap[comboText]}</span><span style="font-size:14px">${comboText.toUpperCase()}</span>`;
+    
+    // 【ひらがな先見せ配置】
+    // 落下時に下側の「ひらがな」が最初に見え、上側の「ローマ字」が後から見えるように上下を逆転
+    el.innerHTML = `
+        <div style="font-size:16px; opacity: 0.95; line-height: 1.2; margin-top: 2px;">${comboText.toUpperCase()}</div>
+        <div style="font-size:26px; font-weight: bold; line-height: 1.2; margin-bottom: 2px;">${jpMap[comboText]}</div>
+    `;
     el.style.left = (Math.random() * 340 + 30) + 'px'; 
     el.style.top = '-90px';
     document.getElementById('game-container').appendChild(el);
@@ -291,12 +408,14 @@ function updateStat(key, type) {
 }
 
 function gameLoop() {
-    if(!document.getElementById('game-screen').classList.contains('active')) return;
+    if(!document.getElementById('game-screen').classList.contains('active') || state.isPaused) return;
     for(let i=state.activeBlocks.length-1; i>=0; i--) {
         const b = state.activeBlocks[i];
         b.y += b.speed; b.el.style.top = b.y + 'px';
-        if(b.y > 380) {
-            handleMiss(b.waitingVowel ? b.v : b.c);
+        
+        // ミスゾーン（y >= 300）に達した瞬間、自動的に「うちのがした」として処理
+        if(b.y >= 300) {
+            handleThru(b.waitingVowel ? b.v : b.c);
             removeBlock(i);
         }
     }
@@ -309,7 +428,24 @@ function handleMiss(char) {
     const k = char.toUpperCase() || 'A';
     state.missMap[k] = (state.missMap[k] || 0) + 1;
     updateUI();
-    showEffect("おしい！", 330, "#e74c3c");
+    showEffect("おしい！", 310, "#e67e22"); // オレンジ色のキーミス効果
+
+    if (state.mode === 'nomiss') {
+        endLevel();
+    }
+}
+
+function handleThru(char) {
+    state.thruCount++;
+    state.combo = 0;
+    const k = char.toUpperCase() || 'A';
+    state.missMap[k] = (state.missMap[k] || 0) + 1;
+    updateUI();
+    showEffect("うちのがした！", 310, "#e74c3c"); // 赤色の時間切れ効果
+
+    if (state.mode === 'nomiss') {
+        endLevel();
+    }
 }
 
 function showEffect(text, y, color) {
@@ -324,7 +460,7 @@ function showEffect(text, y, color) {
 }
 
 window.addEventListener('keydown', (e) => {
-    if(!document.getElementById('game-screen').classList.contains('active')) return;
+    if(!document.getElementById('game-screen').classList.contains('active') || state.isPaused) return;
     const key = e.key.toLowerCase();
     
     const keyEl = document.getElementById(`key-${key}`);
@@ -333,7 +469,8 @@ window.addEventListener('keydown', (e) => {
         setTimeout(() => keyEl.classList.remove('pressed'), 80);
     }
 
-    const hitIdx = state.activeBlocks.findIndex(b => b.y > 150 && b.y < 380);
+    // ミスゾーン（y >= 300）に入る手前の、画面内にあるブロックのみをタイピングの対象にする
+    const hitIdx = state.activeBlocks.findIndex(b => b.y > -90 && b.y < 300);
     if(hitIdx === -1) return;
     
     const target = state.activeBlocks[hitIdx];
@@ -353,7 +490,7 @@ window.addEventListener('keydown', (e) => {
             state.combo++;
             let points = 100;
             let msg = "いいかんじ！";
-            if(target.y > 280 && target.y < 350) { points = 200; msg = "すごい！"; }
+            if(target.y > 220 && target.y < 300) { points = 200; msg = "すごい！"; } // ミスゾーンぎりぎり
             
             state.score += (points + (state.combo * 10)) * config.speed;
             state.clearCount++;
@@ -378,10 +515,42 @@ function removeBlock(index) {
     state.activeBlocks.splice(index, 1);
 }
 
-function endLevel() {
+// やめる（ポーズ）モーダルをだす
+function showQuitConfirm() {
+    state.isPaused = true;
+    document.getElementById('quit-modal').style.display = 'flex';
+}
+
+// ゲームを再開する
+function resumeGame() {
+    state.isPaused = false;
+    document.getElementById('quit-modal').style.display = 'none';
+    gameLoop(); // ループ再開
+}
+
+// ほんとうにやめる（タイトルにもどる）
+function confirmQuit() {
+    state.isPaused = false;
+    document.getElementById('quit-modal').style.display = 'none';
+    endLevel(true);
+}
+
+function endLevel(forceQuit = false) {
     clearInterval(state.interval); 
     clearInterval(state.spawnInterval);
-    showResult();
+    
+    // コンテナ内のブロックをクリーンアップ
+    const container = document.getElementById('game-container');
+    while(container.children.length > 1) {
+        if(container.lastChild.id !== 'judgment-zone') container.removeChild(container.lastChild);
+        else break;
+    }
+
+    if (forceQuit) {
+        switchScreen('title-screen');
+    } else {
+        showResult();
+    }
 }
 
 function showResult() {
@@ -389,6 +558,18 @@ function showResult() {
     document.getElementById('res-chars').innerText = `${state.clearCount} こ`;
     document.getElementById('res-score').innerText = Math.floor(state.score);
     document.getElementById('res-misses').innerText = `${state.missCount} かい`;
+    document.getElementById('res-thru').innerText = `${state.thruCount} こ`;
+    
+    const playTime = state.mode === 'time' ? config.time : state.elapsedTime;
+    document.getElementById('res-time').innerText = `${playTime} びょう`;
+
+    const titleEl = document.getElementById('result-title');
+    if (state.mode === 'time') {
+        const speedLabel = config.speed === 0.8 ? 'ゆっくり' : config.speed === 2.5 ? 'はやい' : 'ふつう';
+        titleEl.innerText = `タイムチャレンジ けっか (${speedLabel})`;
+    } else {
+        titleEl.innerText = `のーみす チャレンジ けっか`;
+    }
     
     const vowelArea = document.getElementById('vowel-stats');
     const consonantArea = document.getElementById('consonant-stats');
@@ -406,16 +587,20 @@ function showResult() {
     missList.innerHTML = "";
     const sortedMisses = Object.entries(state.missMap).sort((a,b) => b[1] - a[1]);
     
-    if(sortedMisses.length === 0) {
-        missList.innerHTML = "なし！はなまるです！??";
+    if(sortedMisses.length === 0 && state.missCount === 0 && state.thruCount === 0) {
+        missList.innerHTML = "なし！はなまるです！🌟";
         document.getElementById('feedback-text').innerText = "ぜんぶ せいかい！ すごすぎます！ はなまる 100点（てん）です！ つぎは もっと はやく してみる？";
     } else {
         sortedMisses.forEach(([char, count]) => {
             const span = document.createElement('span'); span.className = 'miss-tag';
             span.innerText = `${char} (${count})`; missList.appendChild(span);
         });
-        const worstKey = sortedMisses[0][0];
-        document.getElementById('feedback-text').innerText = `「${worstKey}」が すこし むずかしかったかな？ きーぼーどの いろを みて、つぎも がんばろう！ 手（て）を リラックスさせてね。`;
+        const worstKey = sortedMisses[0] ? sortedMisses[0][0] : '';
+        if (worstKey) {
+            document.getElementById('feedback-text').innerText = `「${worstKey}」が すこし むずかしかったかな？ きーぼーどの いろを みて、つぎも がんばろう！ 手（て）を リラックスさせてね。`;
+        } else {
+            document.getElementById('feedback-text').innerText = `いいかんじ！ つぎは もっと たくさん あてられるように がんばろう！`;
+        }
     }
 }
 
