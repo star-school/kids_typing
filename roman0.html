@@ -123,12 +123,12 @@
             animation: floatUp 0.8s ease-out forwards;
             pointer-events: none;
             font-weight: bold;
-            font-size: 2rem;
+            font-size: 2.2rem;
             z-index: 100;
         }
         @keyframes floatUp {
             from { opacity: 1; transform: translateY(0); }
-            to { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 0; transform: translateY(-70px); }
         }
 
         .btn-config.active-config {
@@ -142,27 +142,80 @@
 
     <div id="app" class="w-full max-w-4xl">
         <!-- メニュー画面 -->
-        <div id="start-screen" class="game-card p-10 text-center">
+        <div id="start-screen" class="game-card p-10 text-center relative overflow-hidden">
             <h1 class="text-4xl md:text-5xl font-bold text-blue-600 mb-6">ローマじ つなぎ</h1>
             <p class="text-xl text-gray-600 mb-8">
                 「こども もじ（K, S...）」と「おかあさん もじ（A, I...）」を<br>
-                あわせて、ローマじを つくってみよう！
+                あわせて、ローマじを つくってみよう！<br>
+                <span class="text-sm text-green-600 font-medium font-bold">★ 「あ・い・う・え・お」は「おかあさん もじ」だけで 1文字で うてるよ！</span>
             </p>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 text-left">
-                <div class="p-4 border-2 border-blue-100 rounded-xl bg-blue-50">
-                    <p class="font-bold mb-2">ヒント</p>
-                    <div class="flex gap-2">
-                        <button onclick="setConfig('hint', true, this)" class="btn-config px-4 py-2 bg-white rounded-full border-2 border-gray-200 flex-1 active-config">あり (ON)</button>
-                        <button onclick="setConfig('hint', false, this)" class="btn-config px-4 py-2 bg-white rounded-full border-2 border-gray-200 flex-1">なし (OFF)</button>
+            <div class="space-y-4 mb-8 text-left">
+                <!-- 1段目：ならび と かず (常に表示) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- もんだい の ならび -->
+                    <div class="p-4 border-2 border-green-100 rounded-xl bg-green-50 shadow-sm">
+                        <p class="font-bold mb-2 text-green-800">もんだい の ならび</p>
+                        <div class="flex gap-2">
+                            <button onclick="setConfig('mode', 'step', this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 flex-1 active-config">じゅんばん</button>
+                            <button onclick="setConfig('mode', 'random', this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 flex-1">バラバラ</button>
+                        </div>
                     </div>
-                    <p id="hint-desc" class="text-xs text-blue-500 mt-2">打つ場所が 光って、ゆっくり 練習できます。</p>
+                    <!-- もんだい の かず -->
+                    <div class="p-4 border-2 border-orange-100 rounded-xl bg-orange-50 shadow-sm">
+                        <p class="font-bold mb-2 text-orange-800">もんだい の かず</p>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button onclick="setConfig('count', 5, this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 text-sm">5問</button>
+                            <button onclick="setConfig('count', 10, this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 active-config text-sm">10問</button>
+                            <button onclick="setConfig('count', 20, this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 text-sm">20問</button>
+                            <button onclick="setConfig('count', 'all', this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 text-sm">ぜんぶ</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="p-4 border-2 border-green-100 rounded-xl bg-green-50">
-                    <p class="font-bold mb-2">もんだい の ならび</p>
-                    <div class="flex gap-2">
-                        <button onclick="setConfig('mode', 'step', this)" class="btn-config px-4 py-2 bg-white rounded-full border-2 border-gray-200 flex-1 active-config">じゅんばん</button>
-                        <button onclick="setConfig('mode', 'random', this)" class="btn-config px-4 py-2 bg-white rounded-full border-2 border-gray-200 flex-1">バラバラ</button>
+
+                <!-- こまかいルール ボタン -->
+                <div class="text-center py-2">
+                    <button onclick="toggleAdvanced()" class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-full border-2 border-slate-300 transition-all shadow-sm text-sm" id="advanced-btn">
+                        <span id="advanced-btn-text">⚙️ こまかいルール（ヒント・ぎょう の せんたく）をひらく</span>
+                    </button>
+                </div>
+
+                <!-- 2段目：こまかい設定 (アコーディオン、初期非表示) -->
+                <div id="advanced-settings" class="hidden space-y-4 pt-4 border-t-2 border-dashed border-gray-200">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <!-- ヒント（オプション） -->
+                        <div class="p-4 border-2 border-blue-100 rounded-xl bg-blue-50">
+                            <p class="font-bold mb-2 text-blue-800">ヒント</p>
+                            <div class="flex gap-2">
+                                <button onclick="setConfig('hint', true, this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 flex-1 active-config text-sm">あり (ON)</button>
+                                <button onclick="setConfig('hint', false, this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 flex-1 text-sm">なし (OFF)</button>
+                            </div>
+                            <p id="hint-desc" class="text-xs text-blue-500 mt-2">キーボードが 光って、場所を おしえてくれます。</p>
+                        </div>
+                        
+                        <!-- 行のせんたく（複数選択対応） -->
+                        <div class="p-4 border-2 border-purple-100 rounded-xl bg-purple-50 lg:col-span-2">
+                            <div class="flex justify-between items-center mb-2">
+                                <p class="font-bold text-purple-800">れんしゅうする 行（ぎょう）<span class="text-xs font-normal text-purple-600">(なんこでも えらべるよ)</span></p>
+                                <div class="flex gap-2 text-xs">
+                                    <button onclick="selectAllRows(true)" class="px-2 py-1 bg-white border border-purple-300 rounded text-purple-700 hover:bg-purple-100 font-bold transition-colors shadow-sm">すべてえらぶ</button>
+                                    <button onclick="selectAllRows(false)" class="px-2 py-1 bg-white border border-purple-300 rounded text-purple-700 hover:bg-purple-100 font-bold transition-colors shadow-sm">リセット</button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-3">
+                                <button onclick="toggleRowSelection('a', this)" data-row="a" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">あ行</button>
+                                <button onclick="toggleRowSelection('ka', this)" data-row="ka" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">か行</button>
+                                <button onclick="toggleRowSelection('sa', this)" data-row="sa" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">さ行</button>
+                                <button onclick="toggleRowSelection('ta', this)" data-row="ta" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">た行</button>
+                                <button onclick="toggleRowSelection('na', this)" data-row="na" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">な行</button>
+                                <button onclick="toggleRowSelection('ha', this)" data-row="ha" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">は行</button>
+                                <button onclick="toggleRowSelection('ma', this)" data-row="ma" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">ま行</button>
+                                <button onclick="toggleRowSelection('ya', this)" data-row="ya" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">や行</button>
+                                <button onclick="toggleRowSelection('ra', this)" data-row="ra" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">ら行</button>
+                                <button onclick="toggleRowSelection('wa', this)" data-row="wa" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">わをん</button>
+                            </div>
+                            <p id="row-desc" class="text-xs text-purple-600 font-bold">ぜんぶの 行（あ〜ん）を まぜて れんしゅうします！</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -184,9 +237,9 @@
                 <div class="flex flex-col items-center mb-10">
                     <div id="target-kana" class="text-8xl mb-6 font-bold text-gray-800">か</div>
                     
-                    <div class="flex gap-4">
+                    <div class="flex gap-4 items-center" id="slots-container">
                         <div id="slot-1" class="slot slot-consonant"></div>
-                        <div class="text-4xl flex items-center text-gray-300">＋</div>
+                        <div id="plus-sign" class="text-4xl flex items-center text-gray-300">＋</div>
                         <div id="slot-2" class="slot slot-vowel"></div>
                     </div>
                     <div id="guide-msg" class="mt-6 text-xl text-gray-500 h-8 font-medium"></div>
@@ -230,7 +283,9 @@
     <script>
         const config = {
             hint: true,
-            mode: 'step'
+            mode: 'step',
+            count: 10,
+            selectedRows: ['a', 'ka', 'sa', 'ta', 'na', 'ha', 'ma', 'ya', 'ra', 'wa'] // 初期状態はぜんぶ
         };
 
         const state = {
@@ -248,13 +303,22 @@
             endTime: 0
         };
 
+        let showAdvanced = false;
+
         const ROMAJI_DATA = [
-            { kana: 'か', romaji: 'KA' }, { kana: 'き', romaji: 'KI' }, { kana: 'く', romaji: 'KU' }, { kana: 'け', romaji: 'KE' }, { kana: 'こ', romaji: 'KO' },
-            { kana: 'さ', romaji: 'SA' }, { kana: 'し', romaji: 'SI' }, { kana: 'す', romaji: 'SU' }, { kana: 'せ', romaji: 'SE' }, { kana: 'そ', romaji: 'SO' },
-            { kana: 'た', romaji: 'TA' }, { kana: 'ち', romaji: 'TI' }, { kana: 'つ', romaji: 'TU' }, { kana: 'て', romaji: 'TE' }, { kana: 'と', romaji: 'TO' },
-            { kana: 'な', romaji: 'NA' }, { kana: 'に', romaji: 'NI' }, { kana: 'ぬ', romaji: 'NU' }, { kana: 'ね', romaji: 'NE' }, { kana: 'の', romaji: 'NO' },
-            { kana: 'は', romaji: 'HA' }, { kana: 'ひ', romaji: 'HI' }, { kana: 'ふ', romaji: 'HU' }, { kana: 'へ', romaji: 'HE' }, { kana: 'ほ', romaji: 'HO' },
-            { kana: 'ま', romaji: 'MA' }, { kana: 'み', romaji: 'MI' }, { kana: 'む', romaji: 'MU' }, { kana: 'め', romaji: 'ME' }, { kana: 'も', romaji: 'MO' }
+            // あ行（母音のみ・1文字入力）
+            { kana: 'あ', romaji: 'A', row: 'a' }, { kana: 'い', romaji: 'I', row: 'a' }, { kana: 'う', romaji: 'U', row: 'a' }, { kana: 'え', romaji: 'E', row: 'a' }, { kana: 'お', romaji: 'O', row: 'a' },
+            // か行〜ま行（子音＋母音・2文字入力）
+            { kana: 'か', romaji: 'KA', row: 'ka' }, { kana: 'き', romaji: 'KI', row: 'ka' }, { kana: 'く', romaji: 'KU', row: 'ka' }, { kana: 'け', romaji: 'KE', row: 'ka' }, { kana: 'こ', romaji: 'KO', row: 'ka' },
+            { kana: 'さ', romaji: 'SA', row: 'sa' }, { kana: 'し', romaji: 'SI', row: 'sa' }, { kana: 'す', romaji: 'SU', row: 'sa' }, { kana: 'せ', romaji: 'SE', row: 'sa' }, { kana: 'そ', romaji: 'SO', row: 'sa' },
+            { kana: 'た', romaji: 'TA', row: 'ta' }, { kana: 'ち', romaji: 'TI', row: 'ta' }, { kana: 'つ', romaji: 'TU', row: 'ta' }, { kana: 'て', romaji: 'TE', row: 'ta' }, { kana: 'と', romaji: 'TO', row: 'ta' },
+            { kana: 'な', romaji: 'NA', row: 'na' }, { kana: 'に', romaji: 'NI', row: 'na' }, { kana: 'ぬ', romaji: 'NU', row: 'na' }, { kana: 'ね', romaji: 'NE', row: 'na' }, { kana: 'の', romaji: 'NO', row: 'na' },
+            { kana: 'は', romaji: 'HA', row: 'ha' }, { kana: 'ひ', romaji: 'HI', row: 'ha' }, { kana: 'ふ', romaji: 'HU', row: 'ha' }, { kana: 'へ', romaji: 'HE', row: 'ha' }, { kana: 'ほ', romaji: 'HO', row: 'ha' },
+            { kana: 'ま', romaji: 'MA', row: 'ma' }, { kana: 'み', romaji: 'MI', row: 'ma' }, { kana: 'む', romaji: 'MU', row: 'ma' }, { kana: 'め', romaji: 'ME', row: 'ma' }, { kana: 'も', romaji: 'MO', row: 'ma' },
+            // や行・ら行・わ・を・ん
+            { kana: 'や', romaji: 'YA', row: 'ya' }, { kana: 'ゆ', romaji: 'YU', row: 'ya' }, { kana: 'よ', romaji: 'YO', row: 'ya' },
+            { kana: 'ら', romaji: 'RA', row: 'ra' }, { kana: 'り', romaji: 'RI', row: 'ra' }, { kana: 'る', romaji: 'RU', row: 'ra' }, { kana: 'れ', romaji: 'RE', row: 'ra' }, { kana: 'ろ', romaji: 'RO', row: 'ra' },
+            { kana: 'わ', romaji: 'WA', row: 'wa' }, { kana: 'を', romaji: 'WO', row: 'wa' }, { kana: 'ん', romaji: 'NN', row: 'wa' }
         ];
 
         const kbRows = [
@@ -292,6 +356,19 @@
             osc.stop(audioCtx.currentTime + duration);
         }
 
+        // コマンドラインフィードバック（警告・アナウンス用）
+        function showFloatingTextOnMenu(text, color) {
+            const el = document.createElement('div');
+            el.className = 'floating-text';
+            el.innerText = text;
+            el.style.color = color;
+            el.style.left = '50%';
+            el.style.top = '15%';
+            el.style.transform = 'translateX(-50%)';
+            document.getElementById('start-screen').appendChild(el);
+            setTimeout(() => el.remove(), 1200);
+        }
+
         function setConfig(key, value, btn) {
             config[key] = value;
             const parent = btn.parentElement;
@@ -300,8 +377,88 @@
 
             if (key === 'hint') {
                 const desc = document.getElementById('hint-desc');
-                if (value === true) desc.innerText = "打つ場所が 光って、ゆっくり 練習できます。";
-                else desc.innerText = "ヒントが 消えて、テンポよく 練習できます。";
+                if (value === true) desc.innerText = "キーボードが 光って、場所を おしえてくれます。";
+                else desc.innerText = "ヒントが 消えて、じぶんの力だけで 練習できます。";
+            }
+        }
+
+        // アコーディオンの開閉
+        function toggleAdvanced() {
+            showAdvanced = !showAdvanced;
+            const advSection = document.getElementById('advanced-settings');
+            const advBtnText = document.getElementById('advanced-btn-text');
+            if (showAdvanced) {
+                advSection.classList.remove('hidden');
+                advBtnText.innerText = '⚙️ こまかいルール（ヒント・ぎょう の せんたく）をとじる';
+            } else {
+                advSection.classList.add('hidden');
+                advBtnText.innerText = '⚙️ こまかいルール（ヒント・ぎょう の せんたく）をひらく';
+            }
+        }
+
+        // 行の複数トグル選択
+        function toggleRowSelection(rowKey, btn) {
+            const index = config.selectedRows.indexOf(rowKey);
+            if (index > -1) {
+                // すでに選択されている場合
+                if (config.selectedRows.length <= 1) {
+                    showFloatingTextOnMenu('最低（さいてい）でも 1つは えらんでね！', '#ef4444');
+                    return;
+                }
+                config.selectedRows.splice(index, 1);
+                btn.classList.remove('bg-purple-500', 'text-white', 'border-purple-600');
+                btn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+            } else {
+                // 新しく選択する場合
+                config.selectedRows.push(rowKey);
+                btn.classList.add('bg-purple-500', 'text-white', 'border-purple-600');
+                btn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+            }
+            updateRowSelectionUI();
+        }
+
+        // すべてえらぶ / リセット
+        function selectAllRows(select) {
+            const rowKeys = ['a', 'ka', 'sa', 'ta', 'na', 'ha', 'ma', 'ya', 'ra', 'wa'];
+            const buttons = document.querySelectorAll('.btn-row-select');
+            
+            if (select) {
+                config.selectedRows = [...rowKeys];
+                buttons.forEach(btn => {
+                    btn.classList.add('bg-purple-500', 'text-white', 'border-purple-600');
+                    btn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+                });
+            } else {
+                // リセット時は「あ行」のみを選択した状態にする
+                config.selectedRows = ['a'];
+                buttons.forEach(btn => {
+                    const row = btn.getAttribute('data-row');
+                    if (row === 'a') {
+                        btn.classList.add('bg-purple-500', 'text-white', 'border-purple-600');
+                        btn.classList.remove('bg-white', 'text-gray-700', 'border-gray-200');
+                    } else {
+                        btn.classList.remove('bg-purple-500', 'text-white', 'border-purple-600');
+                        btn.classList.add('bg-white', 'text-gray-700', 'border-gray-200');
+                    }
+                });
+            }
+            updateRowSelectionUI();
+        }
+
+        // 選択された行のラベル説明更新
+        function updateRowSelectionUI() {
+            const desc = document.getElementById('row-desc');
+            if (config.selectedRows.length === 10) {
+                desc.innerText = "ぜんぶの 行（あ〜ん）を まぜて れんしゅうします！";
+            } else {
+                const rowNames = {
+                    'a': 'あ', 'ka': 'か', 'sa': 'さ', 'ta': 'た', 'na': 'な',
+                    'ha': 'は', 'ma': 'ま', 'ya': 'や', 'ra': 'ら', 'wa': 'わをん'
+                };
+                // 元の配列（五十音順）に合わせてソートして並べる
+                const sortedKeys = ['a', 'ka', 'sa', 'ta', 'na', 'ha', 'ma', 'ya', 'ra', 'wa'].filter(k => config.selectedRows.includes(k));
+                const selectedNames = sortedKeys.map(r => rowNames[r] + '行');
+                desc.innerText = `えらんだ行：${selectedNames.join('、')} を れんしゅうします！`;
             }
         }
 
@@ -337,7 +494,29 @@
             state.totalKeyStrokes = 0;
             state.correctKeyStrokes = 0;
             state.mistakes = {};
-            state.questions = config.mode === 'random' ? [...ROMAJI_DATA].sort(() => Math.random() - 0.5) : [...ROMAJI_DATA];
+
+            // 1. まず基本問題データを用意
+            let baseQuestions = [...ROMAJI_DATA];
+            
+            // 2. 選択された行のフィルターを適用 (複数行対応)
+            baseQuestions = baseQuestions.filter(q => config.selectedRows.includes(q.row));
+
+            // 3. 並び順（順番かシャッフルか）
+            if (config.mode === 'random') {
+                baseQuestions.sort(() => Math.random() - 0.5);
+            }
+
+            // 4. 問題数設定の反映
+            if (config.count !== 'all') {
+                baseQuestions = baseQuestions.slice(0, Math.min(baseQuestions.length, parseInt(config.count)));
+            }
+            state.questions = baseQuestions;
+
+            // 例外ガード
+            if (state.questions.length === 0) {
+                state.questions = [...ROMAJI_DATA].slice(0, config.count === 'all' ? ROMAJI_DATA.length : parseInt(config.count));
+            }
+
             state.startTime = Date.now();
             nextQuestion();
         }
@@ -350,12 +529,30 @@
             }
             const q = state.questions[state.currentIndex];
             document.getElementById('target-kana').innerText = q.kana;
-            state.currentStep = 0;
             
             const s1 = document.getElementById('slot-1');
             const s2 = document.getElementById('slot-2');
-            s1.innerText = ''; s1.className = 'slot slot-consonant active';
-            s2.innerText = ''; s2.className = 'slot slot-vowel';
+            const plus = document.getElementById('plus-sign');
+            
+            if (q.romaji.length === 1) {
+                // あ行の場合：1文字スロット
+                s1.classList.add('hidden');
+                plus.classList.add('hidden');
+                
+                s2.innerText = '';
+                s2.className = 'slot slot-vowel active';
+                state.currentStep = 1; 
+            } else {
+                // 2文字スロット
+                s1.classList.remove('hidden');
+                plus.classList.remove('hidden');
+                
+                s1.innerText = ''; 
+                s1.className = 'slot slot-consonant active';
+                s2.innerText = ''; 
+                s2.className = 'slot slot-vowel';
+                state.currentStep = 0; 
+            }
             
             updateGuide();
             highlightTargetKey();
@@ -363,25 +560,24 @@
 
         function updateGuide() {
             const q = state.questions[state.currentIndex];
-            const target = q.romaji[state.currentStep];
+            const targetChar = q.romaji.length === 1 ? q.romaji[0] : q.romaji[state.currentStep];
             const msgEl = document.getElementById('guide-msg');
-            msgEl.innerText = `「${target}」を うってみよう！`;
+            msgEl.innerText = `「${targetChar}」を うってみよう！`;
         }
 
         function highlightTargetKey() {
-            // 前回のヒントアニメーション用クラスを確実に削除
             document.querySelectorAll('.key').forEach(k => k.classList.remove('target-consonant', 'target-vowel'));
-            if (!config.hint) return; // ヒントなしなら光らせない
+            if (!config.hint) return; 
 
             const q = state.questions[state.currentIndex];
-            const target = q.romaji[state.currentStep];
-            const keyEl = document.getElementById(`key-${target}`);
+            const targetChar = q.romaji.length === 1 ? q.romaji[0] : q.romaji[state.currentStep];
+            const keyEl = document.getElementById(`key-${targetChar}`);
+            
             if (keyEl) {
-                // 子音なら赤色のパルス、母音なら緑色のパルスを付与
-                if (state.currentStep === 0) {
-                    keyEl.classList.add('target-consonant');
-                } else {
+                if (q.romaji.length === 1 || state.currentStep === 1) {
                     keyEl.classList.add('target-vowel');
+                } else {
+                    keyEl.classList.add('target-consonant');
                 }
             }
         }
@@ -400,9 +596,9 @@
             }
 
             const q = state.questions[state.currentIndex];
-            const target = q.romaji[state.currentStep];
+            const targetChar = q.romaji.length === 1 ? q.romaji[0] : q.romaji[state.currentStep];
 
-            if (key === target) {
+            if (key === targetChar) {
                 state.correctKeyStrokes++;
                 handleSuccess(key);
             } else {
@@ -412,28 +608,42 @@
 
         function handleSuccess(key) {
             playTone(440 + state.currentStep * 100, 'triangle');
-            const slot = document.getElementById(`slot-${state.currentStep + 1}`);
-            slot.innerText = key;
-            slot.classList.add('filled');
-            slot.classList.remove('active');
-
-            if (state.currentStep === 0) {
-                state.currentStep = 1;
-                document.getElementById('slot-2').classList.add('active');
-                updateGuide();
-                highlightTargetKey();
-            } else {
-                state.score += (config.hint ? 100 : 150) + (state.combo * 10);
-                state.combo++;
-                state.correctCount++;
-                state.currentIndex++;
-                updateUI();
-                showFloatingText('PERFECT!!', '#3b82f6');
+            const q = state.questions[state.currentIndex];
+            
+            if (q.romaji.length === 1) {
+                const slot2 = document.getElementById('slot-2');
+                slot2.innerText = key;
+                slot2.classList.add('filled');
+                slot2.classList.remove('active');
                 
-                // ヒントありならゆったり、なしなら素早く
-                const waitTime = config.hint ? 1200 : 400;
-                setTimeout(nextQuestion, waitTime);
+                finishQuestion();
+            } else {
+                const slot = document.getElementById(`slot-${state.currentStep + 1}`);
+                slot.innerText = key;
+                slot.classList.add('filled');
+                slot.classList.remove('active');
+
+                if (state.currentStep === 0) {
+                    state.currentStep = 1;
+                    document.getElementById('slot-2').classList.add('active');
+                    updateGuide();
+                    highlightTargetKey();
+                } else {
+                    finishQuestion();
+                }
             }
+        }
+
+        function finishQuestion() {
+            state.score += (config.hint ? 100 : 150) + (state.combo * 10);
+            state.combo++;
+            state.correctCount++;
+            state.currentIndex++;
+            updateUI();
+            showFloatingText('PERFECT!!', '#3b82f6');
+            
+            const waitTime = config.hint ? 1200 : 400;
+            setTimeout(nextQuestion, waitTime);
         }
 
         function handleMiss(key) {
@@ -443,7 +653,8 @@
             showFloatingText('どんまい！', '#ef4444');
             
             const q = state.questions[state.currentIndex];
-            const missKey = q.kana + '(' + q.romaji[state.currentStep] + ')';
+            const currentStepChar = q.romaji.length === 1 ? q.romaji[0] : q.romaji[state.currentStep];
+            const missKey = q.kana + '(' + currentStepChar + ')';
             state.mistakes[missKey] = (state.mistakes[missKey] || 0) + 1;
         }
 
@@ -483,13 +694,13 @@
             const missKeys = Object.keys(state.mistakes);
             
             if (missKeys.length > 0) {
-                stats.innerHTML = '<p class="font-bold text-gray-700 mb-3 text-lg">?? もういちど れんしゅう：</p>' + 
+                stats.innerHTML = '<p class="font-bold text-gray-700 mb-3 text-lg">🌸 もういちど れんしゅう：</p>' + 
                                  '<div class="flex flex-wrap">' +
                                  missKeys.map(k => `<span class="inline-block bg-red-100 px-4 py-2 rounded-full m-1 text-red-600 font-bold border border-red-200">${k}</span>`).join('') +
                                  '</div><p class="mt-4 text-sm text-gray-500">あわてなくても だいじょうぶ！ じぶんの ペースで うとう！</p>';
                 document.getElementById('feedback-text').innerText = "よく がんばったね！ つぎは もっと できるよ！";
             } else {
-                stats.innerHTML = '<div class="text-center"><p class="text-2xl text-green-600 font-bold mb-2">?? パーフェクト！</p><p class="text-gray-600">ミスなしで クリア！ すばらしい 集中力（しゅうちゅうりょく）です！</p></div>';
+                stats.innerHTML = '<div class="text-center"><p class="text-2xl text-green-600 font-bold mb-2">💮 パーフェクト！</p><p class="text-gray-600">ミスなしで クリア！ すばらしい 集中力（しゅうちゅうりょく）です！</p></div>';
                 document.getElementById('feedback-text').innerText = "きみは ローマじの 天才（てんさい）だ！";
             }
         }
