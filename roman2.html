@@ -9,11 +9,20 @@
             --color-a: #ff5e57; --color-i: #48c1fb; --color-u: #feb72b;
             --color-e: #2ed573; --color-o: #a55eea;
             --bg-color: #f8f9fa;
-            --f-pinky: #ff6b81; --f-ring: #2ed573; --f-middle: #54a0ff; --f-index: #ff9f43;
             --shadow: 0 4px 6px rgba(0,0,0,0.1);
             --primary: #3498db;
             --success: #2ecc71;
             --danger: #e74c3c;
+
+            /* 画像・テキスト連動の8指カラー */
+            --f-pinky-l: #ff5e57;   /* 左手小指 (Q, A, Z) */
+            --f-ring-l: #f1c40f;    /* 左手薬指 (W, S, X) */
+            --f-middle-l: #2ecc71;  /* 左手中指 (E, D, C) */
+            --f-index-l: #00d2d3;   /* 左手人差し指 (R, T, F, G, V, B) */
+            --f-index-r: #3867d6;   /* 右手人差し指 (Y, U, H, J, N, M) */
+            --f-middle-r: #20bf6b;  /* 右手中指 (I, K) */
+            --f-ring-r: #ff9f43;    /* 右手薬指 (O, L) */
+            --f-pinky-r: #fd79a8;   /* 右手小指 (P) */
         }
 
         body { 
@@ -93,14 +102,22 @@
         .key { 
             width: 36px; height: 42px; background: #fff; border-radius: 8px; margin: 2px; 
             display: flex; align-items: center; justify-content: center; font-size: 13px; 
-            font-weight: bold; border-bottom: 3px solid #bdc3c7; transition: all 0.05s;
+            font-weight: bold; box-sizing: border-box;
+            border: 2px solid #bdc3c7; /* デフォルトわく線 */
+            transition: all 0.05s;
         }
-        .f-pinky { border-top: 3px solid var(--f-pinky); } 
-        .f-ring { border-top: 3px solid var(--f-ring); } 
-        .f-middle { border-top: 3px solid var(--f-middle); } 
-        .f-index { border-top: 3px solid var(--f-index); }
+
+        /* 左右指カラー枠線クラス（画像マッピングに対応） */
+        .f-pinky-l { border-color: var(--f-pinky-l); }
+        .f-ring-l { border-color: var(--f-ring-l); }
+        .f-middle-l { border-color: var(--f-middle-l); }
+        .f-index-l { border-color: var(--f-index-l); }
+        .f-index-r { border-color: var(--f-index-r); }
+        .f-middle-r { border-color: var(--f-middle-r); }
+        .f-ring-r { border-color: var(--f-ring-r); }
+        .f-pinky-r { border-color: var(--f-pinky-r); }
         
-        .pressed { transform: translateY(2px); border-bottom-width: 1px; background: #95a5a6 !important; color: white; }
+        .pressed { transform: translateY(2px); background: #95a5a6 !important; color: white; border-color: #7f8c8d !important; }
 
         #ui-layer { 
             width: 450px; 
@@ -198,19 +215,19 @@
             </div>
 
             <div class="item">
-                <label>3. あそぶ じかん（タイムチャレンジ用）</label>
+                <label>3. あそぶ じかん</label>
                 <div class="btn-group">
                     <button class="opt-btn time-opt" onclick="setConfig('time', 30, this)">30びょう</button>
                     <button class="opt-btn time-opt selected" onclick="setConfig('time', 60, this)">60びょう</button>
                     <button class="opt-btn time-opt" onclick="setConfig('time', 90, this)">90びょう</button>
                 </div>
-                <div style="font-size: 11px; color: #7f8c8d; margin-top: 4px; font-weight: normal;">※のーみす チャレンジのときは、じかんは かんけいないよ！</div>
+                <div style="font-size: 11px; color: #7f8c8d; margin-top: 4px; font-weight: normal;">※ノーミス モードのときは、じかんは かんけいないよ！</div>
             </div>
 
             <!-- モード選択の2つのしゅっぱつボタン -->
             <div style="margin-top: 20px;">
-                <button class="btn-start" style="background: var(--primary); box-shadow: 0 5px 0 #2980b9;" onclick="startGame('time')">タイムチャレンジ！</button>
-                <button class="btn-start" style="background: #e67e22; box-shadow: 0 5px 0 #d35400; margin-top: 12px;" onclick="startGame('nomiss')">のーみす チャレンジ！</button>
+                <button class="btn-start" style="background: var(--primary); box-shadow: 0 5px 0 #2980b9;" onclick="startGame('time')">はじめる</button>
+                <button class="btn-start" style="background: #e67e22; box-shadow: 0 5px 0 #d35400; margin-top: 12px;" onclick="startGame('nomiss')">ノーミス モード</button>
             </div>
         </div>
     </div>
@@ -237,6 +254,7 @@
             <div class="stat-row"><span>てんすう：</span><strong id="res-score">0</strong></div>
             <div id="res-time-row" class="stat-row"><span>あそんだ じかん：</span><strong id="res-time">0 びょう</strong></div>
             <div class="stat-row"><span>あてた かず：</span><strong id="res-chars">0 こ</strong></div>
+            <div class="stat-row" style="color:#e67e22;"><span>つづいた かず：</span><strong id="res-max-combo">0 こ</strong></div>
             <div class="stat-row" style="color:#e67e22;"><span>うちまちがい：</span><strong id="res-misses">0 かい</strong></div>
             <div class="stat-row" style="color:var(--danger)"><span>うちのがした：</span><strong id="res-thru">0 こ</strong></div>
 
@@ -281,15 +299,26 @@ const romanData = {
 const jpMap = {
     'a':'あ','i':'い','u':'う','e':'え','o':'お','ka':'か','ki':'き','ku':'く','ke':'け','ko':'こ','sa':'さ','si':'し','su':'す','se':'せ','so':'そ','ta':'た','ti':'ち','tu':'つ','te':'て','to':'と','na':'な','ni':'に','nu':'ぬ','ne':'ね','no':'の','ha':'は','hi':'ひ','hu':'ふ','he':'へ','ho':'ほ','ma':'ま','mi':'み','mu':'む','me':'め','mo':'も','ya':'や','yu':'ゆ','yo':'よ','ra':'ら','ri':'り','ru':'る','re':'れ','ro':'ろ','wa':'わ','wo':'を'
 };
+
+// ホームポジション色分けのフィンガーマッピング（画像とテキストに完全連動）
 const fingerMap = {
-    'q':'f-pinky','a':'f-pinky','z':'f-pinky','w':'f-ring','s':'f-ring','x':'f-ring','e':'f-middle','d':'f-middle','c':'f-middle','r':'f-index','t':'f-index','f':'f-index','g':'f-index','v':'f-index','b':'f-index','y':'f-index','u':'f-index','h':'f-index','j':'f-index','n':'f-index','m':'f-index','i':'f-middle','k':'f-middle','o':'f-ring','l':'f-ring','p':'f-pinky'
+    // 左手
+    'q': 'f-pinky-l', 'a': 'f-pinky-l', 'z': 'f-pinky-l',
+    'w': 'f-ring-l',  's': 'f-ring-l',  'x': 'f-ring-l',
+    'e': 'f-middle-l','d': 'f-middle-l','c': 'f-middle-l',
+    'r': 'f-index-l', 't': 'f-index-l', 'f': 'f-index-l', 'g': 'f-index-l', 'v': 'f-index-l', 'b': 'f-index-l',
+    // 右手
+    'y': 'f-index-r', 'u': 'f-index-r', 'h': 'f-index-r', 'j': 'f-index-r', 'n': 'f-index-r', 'm': 'f-index-r',
+    'i': 'f-middle-r','k': 'f-middle-r',
+    'o': 'f-ring-r',  'l': 'f-ring-r',
+    'p': 'f-pinky-r'
 };
 const kbLayout = [["Q","W","E","R","T","Y","U","I","O","P"],["A","S","D","F","G","H","J","K","L"],["Z","X","C","V","B","N","M"]];
 
 let config = { speed: 1.5, time: 60, selectedRows: [] };
 let state = { 
     mode: 'time', // 'time' または 'nomiss'
-    score:0, timer:0, combo:0, clearCount:0, 
+    score:0, timer:0, combo:0, maxCombo:0, clearCount:0, 
     missCount:0, // うちまちがい（キーミス）
     thruCount:0, // うちのがした（見逃し・落下ミス）
     activeBlocks:[], interval:null, spawnInterval:null,
@@ -331,7 +360,7 @@ function startGame(mode = 'time') {
 
     state = { 
         mode: mode,
-        score:0, timer:config.time, combo:0, clearCount:0, missCount:0, thruCount:0,
+        score:0, timer:config.time, combo:0, maxCombo:0, clearCount:0, missCount:0, thruCount:0,
         activeBlocks:[], interval:null, spawnInterval:null,
         missMap:{}, stats: {}, isPaused: false,
         elapsedTime: 0
@@ -343,7 +372,7 @@ function startGame(mode = 'time') {
 
     // モードごとの初期表示
     if (state.mode === 'nomiss') {
-        document.getElementById('timer-display').innerText = `のーみす！ 0びょう`;
+        document.getElementById('timer-display').innerText = `ノーミス！ 0びょう`;
     } else {
         document.getElementById('timer-display').innerText = `のこり: ${state.timer}`;
     }
@@ -366,7 +395,7 @@ function startTimer() {
             if(state.timer <= 0) endLevel();
         } else {
             state.elapsedTime++;
-            document.getElementById('timer-display').innerText = `のーみす！ ${state.elapsedTime}びょう`;
+            document.getElementById('timer-display').innerText = `ノーミス！ ${state.elapsedTime}びょう`;
         }
     }, 1000);
 }
@@ -382,7 +411,6 @@ function createBlock() {
     el.style.backgroundColor = {a:'#ff5e57', i:'#48c1fb', u:'#feb72b', e:'#2ed573', o:'#a55eea'}[v];
     
     // 【ひらがな先見せ配置】
-    // 落下時に下側の「ひらがな」が最初に見え、上側の「ローマ字」が後から見えるように上下を逆転
     el.innerHTML = `
         <div style="font-size:16px; opacity: 0.95; line-height: 1.2; margin-top: 2px;">${comboText.toUpperCase()}</div>
         <div style="font-size:26px; font-weight: bold; line-height: 1.2; margin-bottom: 2px;">${jpMap[comboText]}</div>
@@ -488,6 +516,12 @@ window.addEventListener('keydown', (e) => {
         if(key === target.v) {
             updateStat(target.v, 'success');
             state.combo++;
+            
+            // 最大コンボ（つづいたかず）を記録
+            if (state.combo > state.maxCombo) {
+                state.maxCombo = state.combo;
+            }
+
             let points = 100;
             let msg = "いいかんじ！";
             if(target.y > 220 && target.y < 300) { points = 200; msg = "すごい！"; } // ミスゾーンぎりぎり
@@ -559,6 +593,7 @@ function showResult() {
     document.getElementById('res-score').innerText = Math.floor(state.score);
     document.getElementById('res-misses').innerText = `${state.missCount} かい`;
     document.getElementById('res-thru').innerText = `${state.thruCount} こ`;
+    document.getElementById('res-max-combo').innerText = `${state.maxCombo} こ`;
     
     const playTime = state.mode === 'time' ? config.time : state.elapsedTime;
     document.getElementById('res-time').innerText = `${playTime} びょう`;
@@ -566,9 +601,9 @@ function showResult() {
     const titleEl = document.getElementById('result-title');
     if (state.mode === 'time') {
         const speedLabel = config.speed === 0.8 ? 'ゆっくり' : config.speed === 2.5 ? 'はやい' : 'ふつう';
-        titleEl.innerText = `タイムチャレンジ けっか (${speedLabel})`;
+        titleEl.innerText = `けっか (${speedLabel})`;
     } else {
-        titleEl.innerText = `のーみす チャレンジ けっか`;
+        titleEl.innerText = `ノーミス モード けっか`;
     }
     
     const vowelArea = document.getElementById('vowel-stats');
