@@ -475,7 +475,7 @@ function createBlock() {
     
     let blockSpeed;
     if(config.speed === 'slow') {
-        blockSpeed = 1.2;
+        blockSpeed = 0.8;
     } else {
         let baseSpeed = config.speed === 'fast' ? 3.2 : 2.0;
         blockSpeed = baseSpeed + (state.clearCount * 0.05) + Math.random();
