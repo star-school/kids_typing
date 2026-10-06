@@ -1,0 +1,342 @@
+@import url('https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap');
+
+:root {
+    --primary: #3498db;
+    --primary-hover: #2980b9;
+    --success: #2ecc71;
+    --success-hover: #27ae60;
+    --miss: #e74c3c;
+    --gold: #f1c40f;
+    --bg-color: #f0f4f8;
+    
+    /* 指使いカラー（左右の手を色分け） */
+    --f-pinky-l: #ff5e57;   /* 左手小指：赤 */
+    --f-ring-l: #f1c40f;    /* 左手薬指：黄色 */
+    --f-middle-l: #2ecc71;  /* 左手中指：緑 */
+    --f-index-l: #00d2d3;   /* 左手人差し指：水色 */
+    --f-index-r: #3867d6;   /* 右手人差し指：青 */
+    --f-middle-r: #20bf6b;  /* 右手中指：深緑 */
+    --f-ring-r: #ff9f43;    /* 右手薬指：オレンジ */
+    --f-pinky-r: #fd79a8;   /* 右手小指：ピンク */
+}
+
+/* 全体の基本設定 */
+body {
+    font-family: 'M PLUS Rounded 1c', 'Kosugi Maru', sans-serif;
+    background-color: var(--bg-color);
+    color: #2c3e50;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* タップ時の青いハイライトを無効化 */
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* 統一UIデザイン */
+.container {
+    width: 100%;
+    max-width: 600px;
+    background: white;
+    border-radius: 30px;
+    padding: 25px 25px 30px 25px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    border: 4px solid #e2e8f0;
+    text-align: center;
+    position: relative;
+    margin: 0 auto;
+}
+
+.screen { display: none; }
+.screen.screen-active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.game-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #64748b;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 10px;
+}
+
+.main-title, h1 {
+    color: #2c3e50;
+    font-size: 2.2rem;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-weight: 800;
+}
+
+.sub-title, .subtitle {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    margin-bottom: 25px;
+    font-weight: bold;
+}
+
+/* 指使い枠線クラス */
+.f-pinky-l  { border-color: var(--f-pinky-l) !important; }
+.f-ring-l   { border-color: var(--f-ring-l) !important; }
+.f-middle-l { border-color: var(--f-middle-l) !important; }
+.f-index-l  { border-color: var(--f-index-l) !important; }
+.f-index-r  { border-color: var(--f-index-r) !important; }
+.f-middle-r { border-color: var(--f-middle-r) !important; }
+.f-ring-r   { border-color: var(--f-ring-r) !important; }
+.f-pinky-r  { border-color: var(--f-pinky-r) !important; }
+
+/* 3Dポップボタン */
+.btn-pop {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background-color: var(--primary);
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #2980b9;
+    transition: transform 0.1s, box-shadow 0.1s;
+    text-decoration: none;
+}
+.btn-pop:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #2980b9;
+}
+
+.btn-pop-success {
+    background-color: var(--success);
+    box-shadow: 0 6px 0 #27ae60;
+}
+.btn-pop-success:active {
+    box-shadow: 0 2px 0 #27ae60;
+}
+
+.btn-pop-danger {
+    background-color: var(--miss);
+    box-shadow: 0 6px 0 #c0392b;
+}
+.btn-pop-danger:active {
+    box-shadow: 0 2px 0 #c0392b;
+}
+
+.btn-pop-gray {
+    background-color: #95a5a6;
+    box-shadow: 0 6px 0 #7f8c8d;
+}
+.btn-pop-gray:active {
+    box-shadow: 0 2px 0 #7f8c8d;
+}
+
+/* ポップな設定カード */
+.settings-card {
+    background: white;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    border: 3px solid #e2e8f0;
+    max-width: 500px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.settings-row {
+    margin-bottom: 20px;
+}
+.settings-label {
+    display: block;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: #475569;
+    font-size: 15px;
+}
+
+/* トグルボタン（セグメントコントロール） */
+.toggle-group {
+    display: flex;
+    gap: 8px;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 14px;
+    border: 1px solid #cbd5e1;
+}
+.toggle-item {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+    text-align: center;
+}
+.toggle-item.active {
+    background: white;
+    color: var(--primary);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* やめる確認モーダル */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    animation: fadeIn 0.2s ease-out;
+}
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 28px;
+    max-width: 90%;
+    width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border: 4px solid #e2e8f0;
+    animation: scaleUp 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes scaleUp {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* コレクションマップ＆キーボードの共通ベース */
+.collection-container {
+    background: #d1d8e0;
+    border-radius: 20px;
+    padding: 15px;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto 15px auto;
+}
+.collection-container.map-hidden .collection-grid {
+    display: none;
+}
+.collection-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.layout-switch-btn {
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+    outline: none;
+}
+.layout-switch-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+.layout-switch-btn:active {
+    transform: scale(0.95);
+}
+.kbd-row {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+.char-slot {
+    width: 32px;
+    height: 40px;
+    font-size: 15px;
+    background: white;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    color: #bbb;
+    transition: all 0.2s;
+}
+.char-slot.active {
+    color: white;
+    background: var(--gold);
+    border-color: #f39c12;
+    transform: scale(1.05);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 母音アクティブ時の指使い連動塗りつぶし */
+.char-slot.active.fill-a { background: var(--f-pinky-l) !important; border-color: var(--f-pinky-l); }
+.char-slot.active.fill-e { background: var(--f-middle-l) !important; border-color: var(--f-middle-l); }
+.char-slot.active.fill-u { background: var(--f-index-r) !important; border-color: var(--f-index-r); }
+.char-slot.active.fill-i { background: var(--f-middle-r) !important; border-color: var(--f-middle-r); }
+.char-slot.active.fill-o { background: var(--f-ring-r) !important; border-color: var(--f-ring-r); }
+
+/* 共通サウンド切り替えボタン */
+.sound-toggle-btn {
+    cursor: pointer;
+    font-weight: bold;
+    user-select: none;
+    transition: all 0.15s ease-in-out;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.sound-toggle-btn:not(.sound-off) {
+    background: var(--success) !important;
+    color: white !important;
+    border-color: #27ae60 !important;
+}
+.sound-toggle-btn.btn-pop:not(.sound-off) {
+    box-shadow: 0 4px 0 #27ae60 !important;
+}
+.sound-toggle-btn.btn-pop:not(.sound-off):active {
+    transform: translateY(3px) !important;
+    box-shadow: 0 1px 0 #27ae60 !important;
+}
+.sound-toggle-btn.sound-off {
+    background: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+    opacity: 0.85;
+}
+#soundMasterBtn.active {
+    background: var(--success) !important;
+    color: white !important;
+}
+
