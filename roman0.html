@@ -5,31 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ローマじ つなぎ - くみあわせ マスター</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/common.css">
+    <script src="js/common.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&display=swap');
-
-        :root {
-            --bg-color: #f0f9ff;
-            --primary-color: #3b82f6;
-            --consonant-color: #ef4444; 
-            --vowel-color: #10b981;    
-            --key-f1: #ffb3ba; --key-f2: #ffdfba; --key-f3: #ffffba; --key-f4: #baffc9;
-            --key-f5: #bae1ff; --key-f6: #e1baff; --key-f7: #ffbaff; --key-f8: #d1d1d1;
-        }
-
         body {
-            font-family: 'Kiwi Maru', serif;
-            background-color: var(--bg-color);
-            overflow-x: hidden;
-            user-select: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px 0;
         }
-
-        .game-card {
-            background: white;
-            border-radius: 2rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-
         .slot {
             width: 80px;
             height: 100px;
@@ -44,7 +31,7 @@
         }
 
         .slot.active {
-            border-color: var(--primary-color);
+            border-color: var(--primary);
             background-color: #eff6ff;
             transform: scale(1.05);
         }
@@ -55,8 +42,8 @@
             border-color: #94a3b8;
         }
 
-        .slot-consonant.filled { border-color: var(--consonant-color); color: var(--consonant-color); }
-        .slot-vowel.filled { border-color: var(--vowel-color); color: var(--vowel-color); }
+        .slot-consonant.filled { border-color: var(--miss); color: var(--miss); }
+        .slot-vowel.filled { border-color: var(--success); color: var(--success); }
 
         .keyboard {
             display: grid;
@@ -82,39 +69,31 @@
         }
         .key.active { transform: translateY(2px); border-bottom-width: 1px; background-color: #fbbf24 !important; }
 
-        .f-pink { border-top: 4px solid var(--key-f1); }
-        .f-orange { border-top: 4px solid var(--key-f2); }
-        .f-yellow { border-top: 4px solid var(--key-f3); }
-        .f-green { border-top: 4px solid var(--key-f4); }
-        .f-blue { border-top: 4px solid var(--key-f5); }
-        .f-purple { border-top: 4px solid var(--key-f6); }
-        .f-red { border-top: 4px solid var(--key-f7); }
-
-        .vowel-highlight { background-color: #d1fae5; border-color: var(--vowel-color); }
+        .vowel-highlight { background-color: #d1fae5; border-color: var(--success); }
         
-        /* 子音（1ステップ目）ヒントのパルスアニメーション - 赤色に変化 */
+        /* 子音（1ステップ目）ヒントのパルスアニメーション */
         .target-consonant { 
             animation: pulse-consonant 1.5s infinite; 
             box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); 
-            border-color: var(--consonant-color) !important;
+            border-color: var(--miss) !important;
         }
 
-        /* 母音（2ステップ目）ヒントのパルスアニメーション - 緑色に変化 */
+        /* 母音（2ステップ目）ヒントのパルスアニメーション */
         .target-vowel { 
             animation: pulse-vowel 1.5s infinite; 
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.6); 
-            border-color: var(--vowel-color) !important;
+            border-color: var(--success) !important;
         }
         
         @keyframes pulse-consonant {
             0% { transform: scale(1); background-color: white; }
-            50% { transform: scale(1.1); background-color: #fee2e2; } /* 薄い赤色 */
+            50% { transform: scale(1.1); background-color: #fee2e2; }
             100% { transform: scale(1); background-color: white; }
         }
 
         @keyframes pulse-vowel {
-            0% { transform: scale(1); background-color: #d1fae5; } /* 母音の薄い緑 */
-            50% { transform: scale(1.1); background-color: #a7f3d0; } /* 少し濃い薄緑 */
+            0% { transform: scale(1); background-color: #d1fae5; }
+            50% { transform: scale(1.1); background-color: #a7f3d0; }
             100% { transform: scale(1); background-color: #d1fae5; }
         }
 
@@ -132,13 +111,13 @@
         }
 
         .btn-config.active-config {
-            background-color: #3b82f6;
+            background-color: var(--primary);
             color: white;
-            border-color: #2563eb;
+            border-color: var(--primary-hover);
         }
     </style>
 </head>
-<body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
+<body class="p-4 md:p-8 w-full flex flex-col items-center justify-center">
 
     <div id="app" class="w-full max-w-4xl">
         <!-- メニュー画面 -->
@@ -150,77 +129,81 @@
                 <span class="text-sm text-green-600 font-medium font-bold">★ 「あ・い・う・え・お」は「おかあさん もじ」だけで 1文字で うてるよ！</span>
             </p>
             
-            <div class="space-y-4 mb-8 text-left">
-                <!-- 1段目：ならび と かず (常に表示) -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- もんだい の ならび -->
-                    <div class="p-4 border-2 border-green-100 rounded-xl bg-green-50 shadow-sm">
-                        <p class="font-bold mb-2 text-green-800">もんだい の ならび</p>
-                        <div class="flex gap-2">
-                            <button onclick="setConfig('mode', 'step', this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 flex-1 active-config">じゅんばん</button>
-                            <button onclick="setConfig('mode', 'random', this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 flex-1">バラバラ</button>
-                        </div>
+            <div class="settings-card" style="text-align: left; max-width: 600px; margin-bottom: 25px;">
+                <div class="settings-row">
+                    <span class="settings-label">おと と こえ</span>
+                    <div class="toggle-group">
+                        <button id="soundMasterBtn" class="toggle-item active" onclick="SoundController.toggle()">ON</button>
+                        <button id="soundMasterBtnOff" class="toggle-item" onclick="SoundController.toggle()">OFF</button>
                     </div>
-                    <!-- もんだい の かず -->
-                    <div class="p-4 border-2 border-orange-100 rounded-xl bg-orange-50 shadow-sm">
-                        <p class="font-bold mb-2 text-orange-800">もんだい の かず</p>
-                        <div class="grid grid-cols-4 gap-2">
-                            <button onclick="setConfig('count', 5, this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 text-sm">5問</button>
-                            <button onclick="setConfig('count', 10, this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 active-config text-sm">10問</button>
-                            <button onclick="setConfig('count', 20, this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 text-sm">20問</button>
-                            <button onclick="setConfig('count', 'all', this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 text-sm">ぜんぶ</button>
-                        </div>
+                </div>
+
+                <div class="settings-row">
+                    <span class="settings-label">もんだい の ならび</span>
+                    <div class="toggle-group">
+                        <button onclick="setConfig('mode', 'step', this)" class="toggle-item active">じゅんばん</button>
+                        <button onclick="setConfig('mode', 'random', this)" class="toggle-item">バラバラ</button>
+                    </div>
+                </div>
+
+                <div class="settings-row">
+                    <span class="settings-label">もんだい の かず</span>
+                    <div class="toggle-group">
+                        <button onclick="setConfig('count', 5, this)" class="toggle-item">5もん</button>
+                        <button onclick="setConfig('count', 10, this)" class="toggle-item active">10もん</button>
+                        <button onclick="setConfig('count', 20, this)" class="toggle-item">20もん</button>
+                        <button onclick="setConfig('count', 'all', this)" class="toggle-item">ぜんぶ</button>
                     </div>
                 </div>
 
                 <!-- こまかいルール ボタン -->
                 <div class="text-center py-2">
-                    <button onclick="toggleAdvanced()" class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-full border-2 border-slate-300 transition-all shadow-sm text-sm" id="advanced-btn">
+                    <button onclick="toggleAdvanced()" class="btn-pop btn-pop-gray" style="padding: 8px 18px; font-size: 13px;" id="advanced-btn">
                         <span id="advanced-btn-text">⚙️ こまかいルール（ヒント・ぎょう の せんたく）をひらく</span>
                     </button>
                 </div>
 
-                <!-- 2段目：こまかい設定 (アコーディオン、初期非表示) -->
+                <!-- 2段目：こまかい設定 -->
                 <div id="advanced-settings" class="hidden space-y-4 pt-4 border-t-2 border-dashed border-gray-200">
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                        <!-- ヒント（オプション） -->
+                        <!-- ヒント -->
                         <div class="p-4 border-2 border-blue-100 rounded-xl bg-blue-50">
-                            <p class="font-bold mb-2 text-blue-800">ヒント</p>
-                            <div class="flex gap-2">
-                                <button onclick="setConfig('hint', true, this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 flex-1 active-config text-sm">あり (ON)</button>
-                                <button onclick="setConfig('hint', false, this)" class="btn-config px-3 py-2 bg-white rounded-full border-2 border-gray-200 flex-1 text-sm">なし (OFF)</button>
+                            <p class="font-bold mb-2 text-blue-800 text-sm">ヒント</p>
+                            <div class="toggle-group">
+                                <button onclick="setConfig('hint', true, this)" class="toggle-item active">あり (ON)</button>
+                                <button onclick="setConfig('hint', false, this)" class="toggle-item">なし (OFF)</button>
                             </div>
                             <p id="hint-desc" class="text-xs text-blue-500 mt-2">キーボードが 光って、場所を おしえてくれます。</p>
                         </div>
                         
-                        <!-- 行のせんたく（複数選択対応） -->
+                        <!-- 行のせんたく -->
                         <div class="p-4 border-2 border-purple-100 rounded-xl bg-purple-50 lg:col-span-2">
                             <div class="flex justify-between items-center mb-2">
-                                <p class="font-bold text-purple-800">れんしゅうする 行（ぎょう）<span class="text-xs font-normal text-purple-600">(なんこでも えらべるよ)</span></p>
+                                <p class="font-bold text-purple-800 text-sm">れんしゅうする 行（ぎょう）</p>
                                 <div class="flex gap-2 text-xs">
-                                    <button onclick="selectAllRows(true)" class="px-2 py-1 bg-white border border-purple-300 rounded text-purple-700 hover:bg-purple-100 font-bold transition-colors shadow-sm">すべてえらぶ</button>
-                                    <button onclick="selectAllRows(false)" class="px-2 py-1 bg-white border border-purple-300 rounded text-purple-700 hover:bg-purple-100 font-bold transition-colors shadow-sm">リセット</button>
+                                    <button onclick="selectAllRows(true)" class="px-2 py-1 bg-white border border-purple-300 rounded text-purple-700 hover:bg-purple-100 font-bold transition-colors">すべて</button>
+                                    <button onclick="selectAllRows(false)" class="px-2 py-1 bg-white border border-purple-300 rounded text-purple-700 hover:bg-purple-100 font-bold transition-colors">リセット</button>
                                 </div>
                             </div>
                             <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-3">
-                                <button onclick="toggleRowSelection('a', this)" data-row="a" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">あ行</button>
-                                <button onclick="toggleRowSelection('ka', this)" data-row="ka" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">か行</button>
-                                <button onclick="toggleRowSelection('sa', this)" data-row="sa" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">さ行</button>
-                                <button onclick="toggleRowSelection('ta', this)" data-row="ta" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">た行</button>
-                                <button onclick="toggleRowSelection('na', this)" data-row="na" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">な行</button>
-                                <button onclick="toggleRowSelection('ha', this)" data-row="ha" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">は行</button>
-                                <button onclick="toggleRowSelection('ma', this)" data-row="ma" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">ま行</button>
-                                <button onclick="toggleRowSelection('ya', this)" data-row="ya" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">や行</button>
-                                <button onclick="toggleRowSelection('ra', this)" data-row="ra" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">ら行</button>
-                                <button onclick="toggleRowSelection('wa', this)" data-row="wa" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white border-2 border-purple-600 font-bold text-xs rounded-lg transition-colors shadow-sm">わをん</button>
+                                <button onclick="toggleRowSelection('a', this)" data-row="a" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white font-bold text-xs rounded-lg transition-colors">あ行</button>
+                                <button onclick="toggleRowSelection('ka', this)" data-row="ka" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white font-bold text-xs rounded-lg transition-colors">か行</button>
+                                <button onclick="toggleRowSelection('sa', this)" data-row="sa" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white font-bold text-xs rounded-lg transition-colors">さ行</button>
+                                <button onclick="toggleRowSelection('ta', this)" data-row="ta" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white font-bold text-xs rounded-lg transition-colors">た行</button>
+                                <button onclick="toggleRowSelection('na', this)" data-row="na" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white font-bold text-xs rounded-lg transition-colors">な行</button>
+                                <button onclick="toggleRowSelection('ha', this)" data-row="ha" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white font-bold text-xs rounded-lg transition-colors">は行</button>
+                                <button onclick="toggleRowSelection('ma', this)" data-row="ma" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white font-bold text-xs rounded-lg transition-colors">ま行</button>
+                                <button onclick="toggleRowSelection('ya', this)" data-row="ya" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white font-bold text-xs rounded-lg transition-colors">や行</button>
+                                <button onclick="toggleRowSelection('ra', this)" data-row="ra" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white font-bold text-xs rounded-lg transition-colors">ら行</button>
+                                <button onclick="toggleRowSelection('wa', this)" data-row="wa" class="btn-row-select px-2 py-1.5 bg-purple-500 text-white font-bold text-xs rounded-lg transition-colors">わをん</button>
                             </div>
-                            <p id="row-desc" class="text-xs text-purple-600 font-bold">ぜんぶの 行（あ〜ん）を まぜて れんしゅうします！</p>
+                            <p id="row-desc" class="text-xs text-purple-600 font-bold">ぜんぶの 行を まぜて れんしゅうします！</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <button onclick="startGame()" class="px-12 py-4 bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold rounded-full transition-all transform hover:scale-105 shadow-lg">
+            <button onclick="startGame()" class="btn-pop btn-pop-success" style="font-size: 22px; padding: 14px 50px;">
                 スタート！
             </button>
         </div>
@@ -231,7 +214,10 @@
                 <div class="flex justify-between items-center mb-8">
                     <div class="text-2xl font-bold text-blue-500">スコア: <span id="score">0</span></div>
                     <div class="text-2xl font-bold text-orange-500" id="combo-container" style="visibility:hidden;"><span id="combo">0</span> れんぞく！</div>
-                    <button onclick="location.reload()" class="text-gray-400 hover:text-gray-600 underline">やめる</button>
+                    <div class="flex gap-2 items-center">
+                        <button class="sound-toggle-btn btn-pop btn-pop-gray" onclick="SoundController.toggle()" style="padding: 6px 14px; font-size: 13px; box-shadow: 0 4px 0 #7f8c8d; border-radius: 10px;">🔊 おと: ON</button>
+                        <button onclick="Navigation.showQuitModal()" class="btn-pop btn-pop-gray" style="padding: 6px 16px; font-size: 14px; box-shadow: 0 4px 0 #7f8c8d;">やめる</button>
+                    </div>
                 </div>
 
                 <div class="flex flex-col items-center mb-10">
@@ -260,11 +246,11 @@
                 </div>
                 <div class="bg-orange-50 p-4 rounded-2xl">
                     <p class="text-sm text-orange-500 font-bold mb-1">といた かず</p>
-                    <p class="text-3xl font-bold text-orange-700"><span id="final-count">0</span>問</p>
+                    <p class="text-3xl font-bold text-orange-700"><span id="final-count">0</span>もん</p>
                 </div>
                 <div class="bg-green-50 p-4 rounded-2xl">
-                    <p class="text-sm text-green-500 font-bold mb-1">かかった時間</p>
-                    <p class="text-3xl font-bold text-green-700"><span id="final-time">0</span>秒</p>
+                    <p class="text-sm text-green-500 font-bold mb-1">かかった じかん</p>
+                    <p class="text-3xl font-bold text-green-700"><span id="final-time">0</span>びょう</p>
                 </div>
             </div>
 
@@ -274,7 +260,7 @@
             <div id="result-stats" class="text-left max-w-md mx-auto mb-8 bg-gray-50 p-6 rounded-2xl border-2 border-blue-50">
             </div>
 
-            <button onclick="location.reload()" class="px-12 py-4 bg-blue-500 text-white text-2xl font-bold rounded-full shadow-lg hover:bg-blue-600 transition-colors">
+            <button onclick="location.reload()" class="btn-pop btn-pop-success" style="font-size: 22px; padding: 14px 50px;">
                 もういちど あそぶ
             </button>
         </div>
@@ -328,33 +314,19 @@
         ];
 
         const fingerMap = {
-            'Q': 'f-pink', 'A': 'f-pink', 'Z': 'f-pink',
-            'W': 'f-orange', 'S': 'f-orange', 'X': 'f-orange',
-            'E': 'f-yellow', 'D': 'f-yellow', 'C': 'f-yellow',
-            'R': 'f-green', 'F': 'f-green', 'V': 'f-green',
-            'T': 'f-green', 'G': 'f-green', 'B': 'f-green',
-            'Y': 'f-blue', 'H': 'f-blue', 'N': 'f-blue',
-            'U': 'f-blue', 'J': 'f-blue', 'M': 'f-blue',
-            'I': 'f-purple', 'K': 'f-purple',
-            'O': 'f-red', 'L': 'f-red',
-            'P': 'f-red'
+            'Q': 'f-pinky-l', 'A': 'f-pinky-l', 'Z': 'f-pinky-l',
+            'W': 'f-ring-l', 'S': 'f-ring-l', 'X': 'f-ring-l',
+            'E': 'f-middle-l', 'D': 'f-middle-l', 'C': 'f-middle-l',
+            'R': 'f-index-l', 'F': 'f-index-l', 'V': 'f-index-l',
+            'T': 'f-index-l', 'G': 'f-index-l', 'B': 'f-index-l',
+            'Y': 'f-index-r', 'H': 'f-index-r', 'N': 'f-index-r',
+            'U': 'f-index-r', 'J': 'f-index-r', 'M': 'f-index-r',
+            'I': 'f-middle-r', 'K': 'f-middle-r',
+            'O': 'f-ring-r', 'L': 'f-ring-r',
+            'P': 'f-pinky-r'
         };
 
         const vowels = ["A", "I", "U", "E", "O"];
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playTone(freq, type = 'sine', duration = 0.1) {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
-        }
 
         // コマンドラインフィードバック（警告・アナウンス用）
         function showFloatingTextOnMenu(text, color) {
@@ -372,8 +344,8 @@
         function setConfig(key, value, btn) {
             config[key] = value;
             const parent = btn.parentElement;
-            parent.querySelectorAll('.btn-config').forEach(b => b.classList.remove('active-config'));
-            btn.classList.add('active-config');
+            parent.querySelectorAll('.toggle-item').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
 
             if (key === 'hint') {
                 const desc = document.getElementById('hint-desc');
@@ -484,6 +456,7 @@
         }
 
         function startGame() {
+            SpeechManager.unlock();
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             setupKeyboard();
@@ -607,7 +580,7 @@
         });
 
         function handleSuccess(key) {
-            playTone(440 + state.currentStep * 100, 'triangle');
+            AudioManager.playTone(440 + state.currentStep * 100, 'triangle', 0.15, 0.1);
             const q = state.questions[state.currentIndex];
             
             if (q.romaji.length === 1) {
@@ -647,7 +620,7 @@
         }
 
         function handleMiss(key) {
-            playTone(150, 'sawtooth', 0.2);
+            AudioManager.play('ng');
             state.combo = 0;
             updateUI();
             showFloatingText('どんまい！', '#ef4444');
@@ -699,9 +672,11 @@
                                  missKeys.map(k => `<span class="inline-block bg-red-100 px-4 py-2 rounded-full m-1 text-red-600 font-bold border border-red-200">${k}</span>`).join('') +
                                  '</div><p class="mt-4 text-sm text-gray-500">あわてなくても だいじょうぶ！ じぶんの ペースで うとう！</p>';
                 document.getElementById('feedback-text').innerText = "よく がんばったね！ つぎは もっと できるよ！";
+                AudioManager.play('clear');
             } else {
                 stats.innerHTML = '<div class="text-center"><p class="text-2xl text-green-600 font-bold mb-2">💮 パーフェクト！</p><p class="text-gray-600">ミスなしで クリア！ すばらしい 集中力（しゅうちゅうりょく）です！</p></div>';
                 document.getElementById('feedback-text').innerText = "きみは ローマじの 天才（てんさい）だ！";
+                AudioManager.play('perfect');
             }
         }
     </script>

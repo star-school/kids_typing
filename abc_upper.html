@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>アルファベット こもじあて</title>
+    <title>アルファベット おおもじあて</title>
     <link rel="stylesheet" href="css/common.css">
     <script src="js/common.js"></script>
     <style>
@@ -136,10 +136,10 @@
         .stats-card { background: #fff; padding: 20px; border-radius: 20px; border: 2px solid #eee; margin: 15px auto; box-shadow: 0 10px 20px rgba(0,0,0,0.05); width: 85%; max-width: 440px; }
         .stat-detail { text-align: left; font-size: 16px; color: #555; margin: 10px 0; display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; }
 
-        /* アプリ別テーマカラー（こもじ = Green） */
+        /* アプリ別テーマカラー（おおもじ = Teal） */
         .collection-container {
-            background: #f0fdf4 !important;
-            border: 2px solid #bbf7d0;
+            background: #f0fdfa !important;
+            border: 2px solid #99f6e4;
             box-shadow: none !important;
         }
 
@@ -244,7 +244,7 @@
 <body>
     <div class="container">
         <div id="start-screen" class="screen screen-active">
-            <h1 class="main-title" style="margin-bottom: 20px;">アルファベット こもじあて</h1>
+            <h1 class="main-title" style="margin-bottom: 20px;">アルファベット おおもじあて</h1>
             
             <div class="settings-card" style="text-align: left;">
                 <div class="settings-row">
@@ -298,11 +298,11 @@
                 <div class="collection-grid" id="collectionGrid"></div>
             </div>
 
-            <div id="status-msg">おおもじ を うえに はこぼう！</div>
+            <div id="status-msg">こもじ を うえに はこぼう！</div>
 
             <!-- 上下グリッド式のゲームボード -->
             <div class="game-board">
-                <!-- 上段：小文字枠 -->
+                <!-- 上段：大文字枠 -->
                 <div class="card-container" id="targets"></div>
                 
                 <!-- 中央：上向き矢印ガイド -->
@@ -312,7 +312,7 @@
                     <span class="board-arrow">▲</span>
                 </div>
                 
-                <!-- 下段：大文字カード -->
+                <!-- 下段：小文字カード -->
                 <div class="card-container" id="sources"></div>
             </div>
 
@@ -331,7 +331,7 @@
     </div>
 
     <script>
-        // 画像（image_161cea.png）のホームポジション色に合わせた指使い設定
+        // 画像のホームポジション色に合わせた指使い設定
         const charData = {
             'A': {read:'えー', type:'trans', finger:'pinky-l', fill:'fill-a'}, 
             'B': {read:'びー', type:'trans', finger:'index-l'}, 
@@ -368,6 +368,7 @@
         ];
 
         let globalCleared = new Set(), sessionCleared = new Set(), startTime, roundSolved = 0;
+        let isSoundEnabled = SettingsManager.get('soundEnabled');
         let voiceMode = SettingsManager.get('voiceMode');
         let currentLayout = 'abc';
         let totalQuestionsLimit = 5;
@@ -477,7 +478,7 @@
                 if (!e.target.closest('.draggable') && !e.target.closest('.dropzone') && selectedElement) {
                     selectedElement.classList.remove('selected');
                     selectedElement = null; selectedChar = null;
-                    document.getElementById('status-msg').textContent = "おおもじ を えらんでね！";
+                    document.getElementById('status-msg').textContent = "こもじ を えらんでね！";
                 }
             });
             showScreen('game-screen');
@@ -493,11 +494,11 @@
             if (selectedElement) selectedElement.classList.remove('selected');
             if (selectedElement === el) {
                 selectedElement = null; selectedChar = null;
-                document.getElementById('status-msg').textContent = "おおもじ を えらんでね！";
+                document.getElementById('status-msg').textContent = "こもじ を えらんでね！";
             } else {
                 selectedElement = el; selectedChar = char;
                 el.classList.add('selected');
-                document.getElementById('status-msg').textContent = `「${char}」を うえに はこぼう！`;
+                document.getElementById('status-msg').textContent = `「${char.toLowerCase()}」を うえに はこぼう！`;
             }
         }
 
@@ -507,7 +508,7 @@
 
             if (dz.getAttribute('data-char') === char) {
                 dz.classList.add('success');
-                dz.textContent = char;
+                dz.textContent = char.toLowerCase();
                 if (selectedElement) { selectedElement.style.visibility = 'hidden'; selectedElement.classList.remove('selected'); }
                 selectedElement = null; selectedChar = null;
                 sessionCleared.add(char);
@@ -539,12 +540,10 @@
                 AudioManager.play('ng');
                 attemptsPerChar[char] = (attemptsPerChar[char] || 0) + 1;
                 
-                // ドロップゾーンの赤いエラー枠表示のみ非同期で解除
                 setTimeout(() => {
                     dz.style.borderColor = ""; dz.style.color = "";
                 }, 800);
 
-                // 選択されたグローバル変数は即時クリアして、非同期処理のタイミングによる上書きバグを防ぐ
                 if (selectedElement) selectedElement.classList.remove('selected');
                 selectedElement = null; selectedChar = null;
             }
@@ -599,17 +598,17 @@
             [...current].sort(() => Math.random() - 0.5).forEach(c => {
                 const d = document.createElement('div');
                 d.className = 'draggable'; 
-                d.innerHTML = `<span class="main-char">${c}</span><span class="reading-char">${charData[c].read}</span>`;
+                d.innerHTML = `<span class="main-char">${c.toLowerCase()}</span><span class="reading-char">${charData[c].read}</span>`;
                 d.addEventListener('click', (e) => { e.stopPropagation(); selectCharCard(d, c); });
                 d.addEventListener('touchstart', (e) => {
                     e.stopPropagation(); selectCharCard(d, c); activeDragEl = d;
                     const touch = e.touches[0]; touchStartX = touch.clientX; touchStartY = touch.clientY;
                     const rect = d.getBoundingClientRect(); elStartX = rect.left; elStartY = rect.top;
                     d.style.position = 'fixed'; d.style.left = `${elStartX}px`; d.style.top = `${elStartY}px`; d.style.zIndex = '1000';
-                    d.style.pointerEvents = 'none'; // ドロップ先の判定を邪魔しないように一時的に無効化
+                    d.style.pointerEvents = 'none';
                 }, { passive: false });
                 d.addEventListener('mousedown', (e) => {
-                    if (e.button !== 0) return; // 左クリックのみ
+                    if (e.button !== 0) return;
                     e.preventDefault();
                     e.stopPropagation();
                     selectCharCard(d, c);
@@ -623,13 +622,13 @@
                     d.style.left = `${elStartX}px`;
                     d.style.top = `${elStartY}px`;
                     d.style.zIndex = '1000';
-                    d.style.pointerEvents = 'none'; // ドロップ先の判定を邪魔しないように一時的に無効化
+                    d.style.pointerEvents = 'none';
                 });
                 src.appendChild(d);
             });
             [...current].sort(() => Math.random() - 0.5).forEach(c => {
                 const z = document.createElement('div');
-                z.className = 'dropzone'; z.textContent = c.toLowerCase(); z.setAttribute('data-char', c);
+                z.className = 'dropzone'; z.textContent = c; z.setAttribute('data-char', c);
                 z.addEventListener('click', (e) => { e.stopPropagation(); if (selectedChar) dropOn(z, selectedChar); });
                 tgt.appendChild(z);
             });
@@ -691,7 +690,7 @@
             if (!activeDragEl) return;
             const touch = e.changedTouches[0];
             const zone = findOverlappingDropzone(activeDragEl, touch.clientX, touch.clientY);
-            activeDragEl.style.pointerEvents = ''; // 元に戻す
+            activeDragEl.style.pointerEvents = '';
             if (zone) dropOn(zone, selectedChar);
             activeDragEl.style.position = ''; activeDragEl.style.left = ''; activeDragEl.style.top = ''; activeDragEl.style.zIndex = '';
             activeDragEl = null;
@@ -706,7 +705,7 @@
         function handleWindowMouseUp(e) {
             if (!activeDragEl) return;
             const zone = findOverlappingDropzone(activeDragEl, e.clientX, e.clientY);
-            activeDragEl.style.pointerEvents = ''; // 元に戻す
+            activeDragEl.style.pointerEvents = '';
             if (zone) dropOn(zone, selectedChar);
             activeDragEl.style.position = ''; activeDragEl.style.left = ''; activeDragEl.style.top = ''; activeDragEl.style.zIndex = '';
             activeDragEl = null;
@@ -719,7 +718,6 @@
             const res = document.getElementById('result-screen');
             showScreen('result-screen');
 
-            // 統計データの計算（ReferenceErrorの解消）
             const totalPlayed = gameSessionList.length;
             const failedChars = Object.keys(attemptsPerChar).filter(c => attemptsPerChar[c] > 0);
             const perfectCount = totalPlayed - failedChars.length;
@@ -728,14 +726,12 @@
             const perfectAll = failedChars.length === 0;
             const time = totalTime;
 
-            // 効果音の再生
             if (perfectAll) {
                 AudioManager.play('perfect');
             } else {
                 AudioManager.play('clear');
             }
 
-            // にがてな（えらびなおした）文字のやさしい応援ガイド
             let failedGuideHTML = "";
             if (failedChars.length > 0) {
                 failedGuideHTML = `
@@ -757,7 +753,6 @@
             document.getElementById('result-content').innerHTML = `
                 <div style="font-size:32px; font-weight:bold; color:var(--gold); margin-bottom:10px;">*** ${perfectAll ? 'パーフェクト' : 'クリア'} ***</div>
                 <div class="stats-card">
-                    <!-- ポジティブビジュアル：ドーナツグラフ（conic-gradientを利用） -->
                     <div class="donut-chart" style="background: conic-gradient(var(--success) 0% ${perfectRatio}%, var(--retry) ${perfectRatio}% 100%);">
                         <div class="donut-chart-text">
                             ${accuracyPercent}%
@@ -765,7 +760,6 @@
                         </div>
                     </div>
 
-                    <!-- グラフの凡例 -->
                     <div class="legend-container">
                         <div class="legend-item">
                             <div class="legend-color" style="background: var(--success);"></div>
@@ -787,7 +781,6 @@
                 </div>
             `;
 
-            // お祝いの紙吹雪エフェクト
             for(let i=0; i<80; i++) {
                 const c = document.createElement('div');
                 c.style.cssText = `position:fixed; width:10px; height:10px; background:hsl(${Math.random()*360},70%,60%); top:-10px; left:${Math.random()*100}vw; z-index:1100; pointer-events:none;`;

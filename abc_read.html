@@ -4,153 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>アルファベットよみ がくしゅう</title>
-    <!-- Google Fonts の読み込み -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=Mochiy+Pop+One&display=swap" rel="stylesheet">
+    <!-- 共通スタイルと共通JS -->
+    <link rel="stylesheet" href="css/common.css">
+    <script src="js/common.js"></script>
     
     <style>
-        :root {
-            --bg-color: #f7f9fc;
-            --main-color: #4a90e2;
-            --text-color: #2c3e50;
-            --card-bg: #ffffff;
-            --shadow: 0 8px 24px rgba(149, 157, 165, 0.2);
-            --font-main: 'Kosugi Maru', sans-serif;
-            --font-pop: 'Mochiy Pop One', sans-serif;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-
+        /* ゲーム独自の追加スタイルのみを定義 */
         body {
-            font-family: var(--font-main);
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            padding: 20px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-        }
-
-        /* 画面全体のコンテナ */
-        .container {
-            width: 100%;
-            max-width: 700px;
-            background: var(--card-bg);
-            border-radius: 30px;
-            padding: 30px;
-            box-shadow: var(--shadow);
-            border: 4px solid #e2e8f0;
-            text-align: center;
-            position: relative;
-        }
-
-        h1 {
-            font-family: var(--font-pop);
-            color: #2c3e50;
-            font-size: 2.2rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 0px #e2e8f0;
-        }
-
-        .subtitle {
-            font-size: 1.1rem;
-            color: #7f8c8d;
-            margin-bottom: 30px;
-            font-weight: bold;
-        }
-
-        .screen { display: none; }
-        .screen.screen-active { display: block; }
-
-        /* 設定エリア */
-        .config-box {
-            background: #f8fafc;
-            border: 2px dashed #cbd5e1;
-            border-radius: 20px;
             padding: 20px;
-            margin: 20px auto;
-            max-width: 500px;
-        }
-        .config-title {
-            font-family: var(--font-pop);
-            font-size: 1.1rem;
-            margin-bottom: 12px;
-            color: #475569;
-        }
-        .btn-group {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .btn-opt {
-            background: white;
-            border: 2px solid #cbd5e1;
-            padding: 10px 24px;
-            border-radius: 50px;
-            font-family: var(--font-pop);
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-opt.selected {
-            background: var(--main-color);
-            color: white;
-            border-color: var(--main-color);
-            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
-        }
-        .btn-start {
-            background: #2ecc71;
-            color: white;
-            border: none;
-            padding: 14px 40px;
-            border-radius: 50px;
-            font-family: var(--font-pop);
-            font-size: 1.4rem;
-            cursor: pointer;
-            box-shadow: 0 6px 16px rgba(46, 204, 113, 0.3);
-            transition: all 0.2s;
-            margin-top: 10px;
-        }
-        .btn-start:active, .btn-start:hover {
-            transform: scale(1.03);
+            touch-action: manipulation;
         }
 
-        /* ゲーム表示 */
-        .game-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-family: var(--font-pop);
-            font-size: 1.1rem;
-            color: #64748b;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #f1f5f9;
-            padding-bottom: 10px;
-        }
-        
         .char-container {
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 20px;
-            margin: 15px 0;
+            margin: 20px 0;
             position: relative;
         }
 
+        /* アプリ別テーマカラー（よみ = Cyan） */
+        .collection-container {
+            background: #ecfeff !important;
+            border: 2px solid #a5f3fc;
+            box-shadow: none !important;
+        }
+
         .question-display {
-            font-family: var(--font-pop);
-            font-size: 7.5rem;
+            font-size: 8rem;
+            font-weight: 800;
             color: #2c3e50;
             line-height: 1.1;
             animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -158,51 +46,70 @@
 
         /* スピーカーボタン */
         .btn-speaker {
-            background: #e2e8f0;
+            background: var(--primary);
             border: none;
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        .btn-speaker:hover {
-            background: #cbd5e1;
-            transform: scale(1.05);
+            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 0 5px 0 #2980b9;
         }
         .btn-speaker:active {
-            transform: scale(0.95);
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #2980b9;
         }
         .btn-speaker svg {
-            width: 26px;
-            height: 26px;
-            fill: #475569;
+            width: 32px;
+            height: 32px;
+            fill: white;
         }
 
         .choices-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
-            max-width: 500px;
+            max-width: 460px;
             margin: 0 auto 10px auto;
         }
+        
+        /* 4択ボタン */
         .btn-choice {
             background: white;
             border: 3px solid #e2e8f0;
             border-radius: 20px;
-            padding: 16px;
-            font-family: var(--font-pop);
-            font-size: 1.5rem;
+            padding: 18px;
+            font-size: 1.6rem;
+            font-weight: 800;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-            transition: all 0.2s;
+            box-shadow: 0 6px 0 #cbd5e1;
+            transition: transform 0.1s, box-shadow 0.1s, border-color 0.1s;
+            color: #475569;
         }
-        .btn-choice:active {
-            transform: scale(0.95);
+        .btn-choice:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #cbd5e1;
+        }
+        .btn-choice.correct {
+            background: var(--success) !important;
+            color: white !important;
+            border-color: var(--success) !important;
+            box-shadow: 0 6px 0 #27ae60 !important;
+        }
+        .btn-choice.correct:active {
+            transform: none !important;
+            box-shadow: 0 6px 0 #27ae60 !important;
+        }
+        .btn-choice.wrong {
+            background: #f1f5f9 !important;
+            color: #cbd5e1 !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 2px 0 #cbd5e1 !important;
+            transform: translateY(4px);
+            cursor: not-allowed;
         }
 
         /* 演出用浮き上がりテキスト */
@@ -211,8 +118,8 @@
             top: 40%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-family: var(--font-pop);
             font-size: 2.8rem;
+            font-weight: 800;
             pointer-events: none;
             opacity: 0;
             z-index: 10;
@@ -225,48 +132,49 @@
             100% { transform: translate(-50%, -70%) scale(0.8); opacity: 0; }
         }
 
-        /* ドーナツグラフ結果画面 */
+        /* 結果画面 */
         .result-title {
-            font-family: var(--font-pop);
             font-size: 1.8rem;
+            font-weight: 800;
             color: #2c3e50;
             margin-bottom: 20px;
         }
-        .donut-container {
+        
+        .donut-chart {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: conic-gradient(var(--success) 0% 0%, #ffeaa7 0% 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             position: relative;
-            width: 180px;
-            height: 180px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05), 0 4px 10px rgba(0,0,0,0.08);
             margin: 0 auto 20px auto;
         }
-        .donut-chart {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: conic-gradient(#2ecc71 0% 0%, #ff9f43 0% 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .donut-inner {
-            width: 120px;
-            height: 120px;
+        .donut-chart::before {
+            content: "";
+            position: absolute;
+            width: 95px;
+            height: 95px;
             background: white;
             border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
         }
-        .donut-percentage {
-            font-family: var(--font-pop);
-            font-size: 1.8rem;
-            color: #2c3e50;
-        }
-        .donut-label {
-            font-size: 0.75rem;
-            color: #7f8c8d;
+        .donut-center-text {
+            position: absolute;
+            font-size: 26px;
             font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            line-height: 1.1;
         }
+        .donut-center-text span {
+            font-size: 11px;
+            color: #7f8c8d;
+            display: block;
+            margin-top: 2px;
+        }
+
         .legend {
             display: flex;
             justify-content: center;
@@ -288,8 +196,8 @@
             border: 2px solid #e2e8f0;
         }
         .review-title {
-            font-family: var(--font-pop);
             font-size: 1rem;
+            font-weight: 800;
             color: #64748b;
             margin-bottom: 10px;
         }
@@ -305,12 +213,12 @@
             color: #c53030;
             padding: 6px 12px;
             border-radius: 12px;
-            font-family: var(--font-pop);
+            font-weight: bold;
             font-size: 1.1rem;
         }
         .perfect-msg {
-            color: #2ecc71;
-            font-family: var(--font-pop);
+            color: var(--success);
+            font-weight: 800;
             font-size: 1.2rem;
             margin: 15px 0;
         }
@@ -320,23 +228,37 @@
             justify-content: center;
             gap: 15px;
         }
-        .btn-action {
-            padding: 12px 28px;
-            border-radius: 50px;
-            font-family: var(--font-pop);
-            font-size: 1.1rem;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
-        }
-        .btn-action:active { transform: scale(0.97); }
-        .btn-retry { background: #4a90e2; color: white; }
-        .btn-home { background: #e2e8f0; color: #475569; }
 
         @keyframes popIn {
             0% { transform: scale(0.6); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
+        }
+
+        .collection-container {
+            margin: 0 auto 15px auto;
+        }
+
+        /* スマートフォン向け最適化 */
+        @media (max-width: 480px) {
+            .char-slot { 
+                width: calc((100vw - 60px) / 13);
+                max-width: 26px; 
+                height: 32px; 
+                font-size: 11px; 
+                border-width: 1.5px;
+            }
+            .collection-container { padding: 8px; border-radius: 15px; }
+            .layout-switch-btn { padding: 4px 8px; font-size: 10px; }
+
+            .container { padding: 15px 15px 25px 15px; }
+            h1 { font-size: 1.8rem; }
+            .subtitle { font-size: 0.95rem; margin-bottom: 20px; }
+            .question-display { font-size: 6rem; }
+            .btn-choice { padding: 14px; font-size: 1.3rem; border-radius: 16px; }
+            .choices-grid { gap: 12px; }
+            .donut-chart { width: 120px; height: 120px; }
+            .donut-chart::before { width: 80px; height: 80px; }
+            .donut-center-text { font-size: 22px; }
         }
     </style>
 </head>
@@ -351,34 +273,61 @@
             <h1>アルファベットよみ</h1>
             <div class="subtitle">もじの 「よみかた」を 4つの なかから えらぼう！</div>
             
-            <div class="config-box">
-                <div class="config-title">もんだいの かず</div>
-                <div class="btn-group">
-                    <button class="btn-opt selected" onclick="setQCount(5, this)">5もん</button>
-                    <button class="btn-opt" onclick="setQCount(10, this)">10もん</button>
-                    <button class="btn-opt" onclick="setQCount(26, this)">ぜんぶ</button>
+            <div class="settings-card" style="text-align: left; margin-bottom: 25px;">
+                <div class="settings-row">
+                    <span class="settings-label">🔊 おと と こえ</span>
+                    <div class="toggle-group">
+                        <button id="soundMasterBtn" class="toggle-item active" onclick="SoundController.toggle()">おと・こえ: ON</button>
+                        <button id="soundMasterBtnOff" class="toggle-item" onclick="SoundController.toggle()">おと・こえ: OFF</button>
+                    </div>
                 </div>
 
-                <div class="config-title" style="margin-top: 15px;">おとの よみあげ</div>
-                <div class="btn-group">
-                    <button class="btn-opt selected" onclick="setVoiceEnabled(false, this)">なし（おすすめ）</button>
-                    <button class="btn-opt" onclick="setVoiceEnabled(true, this)">あり</button>
+                <div class="settings-row">
+                    <span class="settings-label">🗣️ こえの しゅるい</span>
+                    <div class="toggle-group">
+                        <button id="mode-kana" class="toggle-item active" onclick="setVoiceMode('kana')">にほんご</button>
+                        <button id="mode-native" class="toggle-item" onclick="setVoiceMode('native')">ネイティブ（えいご）</button>
+                    </div>
+                </div>
+
+                <div class="settings-row">
+                    <span class="settings-label">📝 もんだいの かず</span>
+                    <div class="toggle-group">
+                        <button id="q-5" class="toggle-item" onclick="setQuestionCount(5)">5もん</button>
+                        <button id="q-10" class="toggle-item" onclick="setQuestionCount(10)">10もん</button>
+                        <button id="q-all" class="toggle-item active" onclick="setQuestionCount(26)">ぜんぶ (26もん)</button>
+                    </div>
                 </div>
             </div>
-            <button class="btn-start" onclick="startGame()">はじめる</button>
+            
+            <button class="btn-pop btn-pop-success" style="font-size: 20px; padding: 14px 45px;" onclick="startGame()">はじめる</button>
         </div>
 
         <!-- 2. メインプレイ画面 -->
         <div id="scr-game" class="screen">
             <div class="game-header">
                 <div id="q-counter">もんだい: 1 / 5</div>
-                <div id="score-counter">いっぱつ正解: 0</div>
+                <div id="score-counter">いっぱつOK: 0</div>
+            </div>
+
+            <!-- こたえたアルファベット（PROGRESS MAP） -->
+            <div class="collection-container" id="collectionContainer">
+                <div class="collection-header">
+                    <div style="font-size: 11px; color: #666; font-weight: bold; letter-spacing: 0.5px;">こたえたアルファベット</div>
+                    <div>
+                        <button id="layoutHideBtn" class="layout-switch-btn" onclick="switchMapLayout('hide')">かくす</button>
+                        <button id="layoutAbcBtn" class="layout-switch-btn active" onclick="switchMapLayout('abc')">ABC</button>
+                        <button id="layoutKbdBtn" class="layout-switch-btn" onclick="switchMapLayout('keyboard')">キーボード</button>
+                        <button class="sound-toggle-btn layout-switch-btn" onclick="SoundController.toggle()">🔊 おと: ON</button>
+                        <button class="layout-switch-btn" onclick="Navigation.showQuitModal(() => goHome())" style="background: #f1f5f9; color: var(--miss);">やめる</button>
+                    </div>
+                </div>
+                <div class="collection-grid" id="collectionGrid"></div>
             </div>
             
             <!-- 出題文字とスピーカーボタン -->
             <div class="char-container">
-                <!-- 空白をあけてバランスをとる -->
-                <div style="width: 50px;"></div> 
+                <div style="width: 60px;"></div> <!-- 左側の余白調整 -->
                 <div id="question-char" class="question-display">A</div>
                 <!-- スピーカーボタン：いつでも読み方を聴けるヒント -->
                 <button class="btn-speaker" onclick="speakCurrentCharacter()" title="おとをきく">
@@ -401,18 +350,16 @@
             <h2 class="result-title">しんだん けっか</h2>
             
             <!-- ドーナツグラフ -->
-            <div class="donut-container">
-                <div id="chart-graph" class="donut-chart">
-                    <div class="donut-inner">
-                        <span id="chart-per" class="donut-percentage">100%</span>
-                        <span class="donut-label">できた率</span>
-                    </div>
+            <div class="donut-chart" id="chart-graph">
+                <div class="donut-center-text">
+                    <span id="chart-per">100%</span>
+                    <span style="font-size: 11px; color: #7f8c8d; display: block; margin-top: 2px;">できた率</span>
                 </div>
             </div>
             
             <div class="legend">
-                <div class="legend-item"><div class="color-box" style="background: #2ecc71;"></div>いっぱつで できた！</div>
-                <div class="legend-item"><div class="color-box" style="background: #ff9f43;"></div>あきらめずに できた！</div>
+                <div class="legend-item"><div class="color-box" style="background: var(--success);"></div>いっぱつで できた！</div>
+                <div class="legend-item"><div class="color-box" style="background: #ffeaa7;"></div>あきらめずに できた！</div>
             </div>
 
             <!-- 苦手な文字のやさしい応援表示 -->
@@ -421,8 +368,8 @@
             </div>
 
             <div class="btn-action-group">
-                <button class="btn-action btn-retry" onclick="startGame()">もういちど あそぶ</button>
-                <button class="btn-action btn-home" onclick="goHome()">はじめの がめん</button>
+                <button class="btn-pop btn-pop-success" style="padding: 12px 28px;" onclick="startGame()">もういちど あそぶ</button>
+                <button class="btn-pop btn-pop-gray" style="padding: 12px 28px;" onclick="goHome()">はじめの がめん</button>
             </div>
         </div>
     </div>
@@ -436,10 +383,49 @@
             'V': 'ぶぃー', 'W': 'だぶりゅー', 'X': 'えっくす', 'Y': 'わい', 'Z': 'ぜっと'
         };
 
-        // アプリケーションの状態管理
+        const charData = {
+            'A': { read: 'えー', finger: 'pinky-l', fill: 'fill-a' },
+            'B': { read: 'びー', finger: 'index-l' },
+            'C': { read: 'しー', finger: 'middle-l' },
+            'D': { read: 'でー', finger: 'middle-l' },
+            'E': { read: 'いー', finger: 'middle-l', fill: 'fill-e' },
+            'F': { read: 'えふ', finger: 'index-l' },
+            'G': { read: 'じー', finger: 'index-l' },
+            'H': { read: 'えいち', finger: 'index-r' },
+            'I': { read: 'あい', finger: 'middle-r', fill: 'fill-i' },
+            'J': { read: 'じぇー', finger: 'index-r' },
+            'K': { read: 'けー', finger: 'middle-r' },
+            'L': { read: 'える', finger: 'ring-r' },
+            'M': { read: 'えむ', finger: 'index-r' },
+            'N': { read: 'えぬ', finger: 'index-r' },
+            'O': { read: 'おー', finger: 'ring-r', fill: 'fill-o' },
+            'P': { read: 'ぴー', finger: 'pinky-r' },
+            'Q': { read: 'きゅー', finger: 'pinky-l' },
+            'R': { read: 'あーる', finger: 'index-l' },
+            'S': { read: 'えす', finger: 'ring-l' },
+            'T': { read: 'てぃー', finger: 'index-l' },
+            'U': { read: 'ゆー', finger: 'index-r', fill: 'fill-u' },
+            'V': { read: 'ぶい', finger: 'index-l' },
+            'W': { read: 'だぶりゅー', finger: 'ring-l' },
+            'X': { read: 'えっくす', finger: 'ring-l' },
+            'Y': { read: 'わい', finger: 'index-r' },
+            'Z': { read: 'ぜっと', finger: 'pinky-l' }
+        };
+
+        const kbdRows = [
+            ["Q","W","E","R","T","Y","U","I","O","P"],
+            ["A","S","D","F","G","H","J","K","L"],
+            ["Z","X","C","V","B","N","M"]
+        ];
+
+        const alphaKeys = Object.keys(charData);
+        let cleared = new Set();
+        let sessionCleared = new Set();
+        let currentLayout = 'abc';
+
+        let voiceMode = SettingsManager.get('voiceMode') === 'en' ? 'native' : 'kana';
         let gState = {
             maxQuestions: 5,
-            voiceEnabled: false, // デフォルト：音声読み上げオフ（基本オフ）
             currentIdx: 0,
             questionList: [],
             firstTryCorrectCount: 0,
@@ -449,32 +435,92 @@
             isTransitioning: false // 次の問題への自動遷移中の二重入力防止
         };
 
-        // 音声アンロック用
-        function unlockAudio() {
-            const context = new (window.AudioContext || window.webkitAudioContext)();
-            if (context.state === 'suspended') { context.resume(); }
+        function switchMapLayout(layout) {
+            currentLayout = layout;
+            const container = document.getElementById('collectionContainer');
+            
+            document.getElementById('layoutHideBtn').classList.toggle('active', layout === 'hide');
+            document.getElementById('layoutAbcBtn').classList.toggle('active', layout === 'abc');
+            document.getElementById('layoutKbdBtn').classList.toggle('active', layout === 'keyboard');
+            
+            if (layout === 'hide') {
+                container.classList.add('map-hidden');
+            } else {
+                container.classList.remove('map-hidden');
+                renderCollectionMap();
+            }
+        }
+
+        function createSlot(c) {
+            const s = document.createElement('div');
+            const data = charData[c] || { finger: 'index-l' };
+            const isActive = cleared.has(c) || sessionCleared.has(c);
+            s.className = `char-slot f-${data.finger} ${isActive ? 'active' : ''} ${data.fill || ''}`;
+            s.textContent = c;
+            return s;
+        }
+
+        function renderCollectionMap() {
+            if (currentLayout === 'hide') return;
+            const grid = document.getElementById('collectionGrid');
+            if (!grid) return;
+            grid.innerHTML = "";
+            
+            if (currentLayout === 'abc') {
+                const row = document.createElement('div'); row.className = 'kbd-row';
+                alphaKeys.forEach(c => {
+                    row.appendChild(createSlot(c));
+                    if(c === 'M') { grid.appendChild(row.cloneNode(true)); row.innerHTML = ""; }
+                });
+                grid.appendChild(row);
+            } else {
+                kbdRows.forEach(rowArr => {
+                    const rowDiv = document.createElement('div'); rowDiv.className = 'kbd-row';
+                    rowArr.forEach(c => { rowDiv.appendChild(createSlot(c)); });
+                    grid.appendChild(rowDiv);
+                });
+            }
+        }
+
+        // DOM読み込み完了時の初期化
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedVoiceMode = SettingsManager.get('voiceMode') === 'en' ? 'native' : 'kana';
+            setVoiceMode(savedVoiceMode);
+            
+            gState.maxQuestions = SettingsManager.get('maxQuestions_read') || 5;
+            updateQCountUI();
+            renderCollectionMap();
+        });
+
+        // こえのしゅるいを選択
+        function setVoiceMode(mode) {
+            voiceMode = mode;
+            document.getElementById('mode-native').classList.toggle('active', mode === 'native');
+            document.getElementById('mode-kana').classList.toggle('active', mode === 'kana');
+            
+            SettingsManager.set('voiceMode', mode === 'native' ? 'en' : 'ja');
+            SpeechManager.unlock();
+            SpeechManager.speak(mode === 'native' ? "Ready" : "スタート");
         }
 
         // もんだいの数を選択
-        function setQCount(count, element) {
+        function setQuestionCount(count) {
             gState.maxQuestions = count;
-            const buttons = element.parentNode.querySelectorAll('.btn-opt');
-            buttons.forEach(btn => btn.classList.remove('selected'));
-            element.classList.add('selected');
-            playAudioTone(440, 0.05);
+            SettingsManager.set('maxQuestions_read', count);
+            updateQCountUI();
+            SpeechManager.unlock();
+            AudioManager.playTone(440, 'sine', 0.05, 0.05);
         }
 
-        // 音声よみあげの有無を選択
-        function setVoiceEnabled(enabled, element) {
-            gState.voiceEnabled = enabled;
-            const buttons = element.parentNode.querySelectorAll('.btn-opt');
-            buttons.forEach(btn => btn.classList.remove('selected'));
-            element.classList.add('selected');
-            playAudioTone(440, 0.05);
+        function updateQCountUI() {
+            document.getElementById('q-5').classList.toggle('active', gState.maxQuestions === 5);
+            document.getElementById('q-10').classList.toggle('active', gState.maxQuestions === 10);
+            document.getElementById('q-all').classList.toggle('active', gState.maxQuestions === 26);
         }
 
         // 最初の画面に戻る
         function goHome() {
+            SpeechManager.cancel();
             showScreen('scr-start');
         }
 
@@ -485,17 +531,19 @@
 
         // ゲーム開始
         function startGame() {
-            unlockAudio();
+            SpeechManager.unlock();
             gState.currentIdx = 0;
             gState.firstTryCorrectCount = 0;
             gState.retryLetters.clear();
             gState.isTransitioning = false;
+            sessionCleared.clear();
             
             // アルファベット配列をシャッフルして問題リストを作成
             const keys = Object.keys(alphabetReading);
             gState.questionList = keys.sort(() => Math.random() - 0.5).slice(0, gState.maxQuestions);
             
             showScreen('scr-game');
+            renderCollectionMap();
             loadQuestion();
         }
 
@@ -509,7 +557,7 @@
             
             // ステータス表示
             document.getElementById('q-counter').innerText = `もんだい: ${gState.currentIdx + 1} / ${gState.maxQuestions}`;
-            document.getElementById('score-counter').innerText = `いっぱつ正解: ${gState.firstTryCorrectCount}`;
+            document.getElementById('score-counter').innerText = `いっぱつOK: ${gState.firstTryCorrectCount}`;
             document.getElementById('question-char').innerText = currentChar;
             
             // 4択ボタンの作成（正解1つ + 誤答3つ）
@@ -535,10 +583,6 @@
                 choicesArea.appendChild(btn);
             });
 
-            // 「おとのよみあげ」が「あり」設定の時のみ、出題時に自動で発音
-            if (gState.voiceEnabled) {
-                speakCharacter(currentChar);
-            }
         }
 
         // 現在の問題のアルファベット音声を発音（スピーカーボタンクリック用）
@@ -547,48 +591,46 @@
             speakCharacter(currentChar);
         }
 
-        // 音声合成による英語一音読み上げ
+        // 音声合成による読み上げ（こえのしゅるいに応じて発音）
         function speakCharacter(char) {
-            try {
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                    const uttr = new SpeechSynthesisUtterance(char);
-                    uttr.lang = 'en-US';
-                    uttr.rate = 0.75; // 少しゆっくりハッキリ発音
-                    window.speechSynthesis.speak(uttr);
-                }
-            } catch(e) {
-                console.log("SpeechSynthesis error:", e);
+            SpeechManager.unlock();
+            if (voiceMode === 'native') {
+                SpeechManager.speak(char, 'en');
+            } else {
+                SpeechManager.speak(alphabetReading[char], 'ja');
             }
         }
 
         // 回答選択肢のチェック
         function checkChoice(selected, clickedBtn) {
-            if (gState.isTransitioning) return; // 自動遷移中の余分な入力を無視
+            if (gState.isTransitioning) return; // 自動遷移中の二重入力を防止
+            if (document.getElementById('quit-modal-common')) return; // やめるモーダル表示中は操作無効
 
             if (selected === gState.currentAnswer) {
                 gState.isTransitioning = true; // 遷移開始フラグ
 
+                const currentChar = gState.questionList[gState.currentIdx];
+                cleared.add(currentChar);
+                sessionCleared.add(currentChar);
+                renderCollectionMap();
+
                 // 正解の挙動
                 if (gState.isFirstTry) {
                     gState.firstTryCorrectCount++;
-                    showFeedback("✨ せいかい！ ✨", "#2ecc71");
-                    playAudioTone(523.25, 0.1); // ド
-                    setTimeout(() => playAudioTone(659.25, 0.1), 100); // ミ
-                    setTimeout(() => playAudioTone(783.99, 0.2), 200); // ソ
+                    showFeedback("✨ せいかい！ ✨", "var(--success)");
+                    AudioManager.play('ok');
                 } else {
                     showFeedback("あきらめずに できた！ 🌟", "#ff9f43");
-                    playAudioTone(523.25, 0.1);
-                    setTimeout(() => playAudioTone(659.25, 0.2), 100);
+                    // できた！というピピッと上がる音
+                    AudioManager.playTone(523, 'sine', 0.1, 0.08);
+                    setTimeout(() => AudioManager.playTone(659, 'sine', 0.2, 0.08), 80);
                 }
                 
                 // ボタンの操作をすべてロック
                 document.querySelectorAll('.btn-choice').forEach(b => b.disabled = true);
-                clickedBtn.style.background = "#2ecc71";
-                clickedBtn.style.color = "white";
-                clickedBtn.style.borderColor = "#2ecc71";
+                clickedBtn.classList.add('correct');
                 
-                // 次のステージボタンを挟まず、1.2秒後に自動的に次の問題、または結果へ移行
+                // 1.2秒後に自動的に次の問題、または結果へ移行
                 setTimeout(() => {
                     nextQuestion();
                 }, 1200);
@@ -596,15 +638,13 @@
             } else {
                 // 不正解・選び直しの挙動
                 showFeedback("おしい！ えらびなおそう ✊", "#ff9f43");
-                playAudioTone(349.23, 0.15); // ファ（低音警告）
+                AudioManager.play('ng');
                 
                 gState.isFirstTry = false;
                 gState.retryLetters.add(gState.questionList[gState.currentIdx]); // 苦手リストに追加
                 
                 clickedBtn.disabled = true;
-                clickedBtn.style.background = "#f1f5f9";
-                clickedBtn.style.color = "#94a3b8";
-                clickedBtn.style.borderColor = "#e2e8f0";
+                clickedBtn.classList.add('wrong');
             }
         }
 
@@ -619,6 +659,11 @@
 
         // 次の問題、あるいはリザルトへ進む処理
         function nextQuestion() {
+            // もしやめるモーダルが表示中なら、モーダルが閉じるまで待つ
+            if (document.getElementById('quit-modal-common')) {
+                setTimeout(nextQuestion, 200);
+                return;
+            }
             gState.currentIdx++;
             if (gState.currentIdx < gState.maxQuestions) {
                 loadQuestion();
@@ -639,17 +684,17 @@
             
             // CSSコニックグラデーションによるドーナツグラフ描画
             const chart = document.getElementById('chart-graph');
-            chart.style.background = `conic-gradient(#2ecc71 0% ${accuracy}%, #ff9f43 ${accuracy}% 100%)`;
+            chart.style.background = `conic-gradient(var(--success) 0% ${accuracy}%, #ffeaa7 ${accuracy}% 100%)`;
             
             // 苦手文字（選び直しが発生した文字）のチップ表示
             const reviewContent = document.getElementById('review-content');
             if (gState.retryLetters.size === 0) {
                 reviewContent.innerHTML = `<div class="perfect-msg">👑 ぜんぶ いっぱつで できたよ！すごすぎる！ 👑</div>`;
                 // パーフェクトファンファーレ効果音
-                playAudioTone(523.25, 0.1);
-                setTimeout(() => playAudioTone(659.25, 0.1), 100);
-                setTimeout(() => playAudioTone(783.99, 0.1), 200);
-                setTimeout(() => playAudioTone(1046.50, 0.4), 300);
+                AudioManager.play('perfect');
+                
+                // 紙吹雪演出
+                createConfetti();
             } else {
                 let html = `<div class="review-title">つぎは これを れんしゅう してみよう！</div>`;
                 html += `<div class="miss-letters">`;
@@ -658,30 +703,24 @@
                 });
                 html += `</div>`;
                 reviewContent.innerHTML = html;
+                
+                AudioManager.play('clear');
             }
         }
 
-        // Web Audio APIによるシンプルなビープ音生成
-        function playAudioTone(freq, duration) {
-            try {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                const ctx = new AudioContext();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                
-                osc.type = 'sine';
-                osc.frequency.value = freq;
-                
-                gain.gain.setValueAtTime(0.15, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + duration);
-                
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                
-                osc.start();
-                osc.stop(ctx.currentTime + duration);
-            } catch(e) {
-                console.log("Audio play blocked");
+        // 紙吹雪アニメーション
+        function createConfetti() {
+            for(let i=0; i<60; i++) {
+                const c = document.createElement('div');
+                c.style.cssText = `position:fixed; width:8px; height:8px; background:hsl(${Math.random()*360},80%,65%); top:-10px; left:${Math.random()*100}vw; z-index:1100; pointer-events:none; border-radius:50%;`;
+                document.body.appendChild(c);
+                c.animate([
+                    { transform: 'translateY(0) rotate(0)' },
+                    { transform: `translateY(105vh) rotate(${Math.random()*360}deg)` }
+                ], { 
+                    duration: 1500 + Math.random()*2000, 
+                    easing: 'ease-out' 
+                }).onfinish = () => c.remove();
             }
         }
     </script>
