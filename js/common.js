@@ -107,7 +107,84 @@ const AudioManager = {
 // 3. SpeechManager (Web Speech API による読み上げ)
 // ----------------------------------------------------
 const SpeechManager = {
+    voices: [],
+
+    initVoices() {
+        if (!('speechSynthesis' in window)) return;
+        const updateVoices = () => {
+            const list = window.speechSynthesis.getVoices();
+            if (list && list.length > 0) {
+                this.voices = list;
+            }
+        };
+        updateVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = updateVoices;
+        }
+    },
+
+    getBestVoice(langType) {
+        if (!this.voices || this.voices.length === 0) {
+            if ('speechSynthesis' in window) {
+                this.voices = window.speechSynthesis.getVoices();
+            }
+        }
+        if (!this.voices || this.voices.length === 0) return null;
+
+        if (langType === 'en') {
+            // 明瞭で信頼性の高い標準英語ボイスを優先選択（Windows/Edge/Chrome/Safari対応）
+            const preferredEn = ['Jenny', 'Zira', 'Google US', 'Samantha', 'David', 'Aria', 'Guy'];
+            for (const name of preferredEn) {
+                const found = this.voices.find(v => 
+                    v.lang.toLowerCase().startsWith('en') && v.name.includes(name)
+                );
+                if (found) return found;
+            }
+
+            // 一般的な en-US または en 系
+            const usVoice = this.voices.find(v => v.lang.toLowerCase() === 'en-us' || v.lang.toLowerCase() === 'en_us');
+            if (usVoice) return usVoice;
+
+            const gbVoice = this.voices.find(v => v.lang.toLowerCase() === 'en-gb' || v.lang.toLowerCase() === 'en_gb');
+            if (gbVoice) return gbVoice;
+
+            const anyEn = this.voices.find(v => v.lang.toLowerCase().startsWith('en'));
+            if (anyEn) return anyEn;
+        } else {
+            // 日本語音声の優先検索
+            const preferredJa = ['Nanami', 'Haruka', 'Google 日本語', 'Kyoko', 'Ayumi', 'Ichiro'];
+            for (const name of preferredJa) {
+                const found = this.voices.find(v => 
+                    v.lang.toLowerCase().startsWith('ja') && v.name.includes(name)
+                );
+                if (found) return found;
+            }
+
+            const jaVoice = this.voices.find(v => v.lang.toLowerCase() === 'ja-jp' || v.lang.toLowerCase() === 'ja_jp');
+            if (jaVoice) return jaVoice;
+
+            const anyJa = this.voices.find(v => v.lang.toLowerCase().startsWith('ja'));
+            if (anyJa) return anyJa;
+        }
+
+        return null;
+    },
+
+    // 英語アルファベット単文字の誤読防止・音素固定マップ
+    // Edge等で略語・音素・他言語として誤読されやすい文字を、辞書準拠の英単語で確実に固定
+    englishLetterMap: {
+        'H': 'aitch',       // 「エイチ」（Edgeで無音・息音になるのを防止）
+        'L': 'ell',         // 「エル」（歯擦音やエスに聞こえるのを防止）
+        'R': 'are',         // 「アール」（巻き舌や曖昧音になるのを防止）
+        'U': 'you',         // 「ユー」（母音「ウー」と読まれるのを防止）
+        'V': 'vee',         // 「ヴィー」（ローマ数字5や略語になるのを防止）
+        'W': 'double you',  // 「ダブルユー」（略語や不自然な音になるのを防止）
+        'Y': 'wye',         // 「ワイ」（スペイン語の「イ」になるのを防止）
+        'Z': 'zee'          // 「ズィー」（アメリカ英語発音）
+    },
+
     unlock() {
+        this.initVoices();
         AudioManager.init();
         // Web Speech API の iOS 制限解除
         if ('speechSynthesis' in window) {
@@ -125,16 +202,37 @@ const SpeechManager = {
         window.speechSynthesis.cancel();
         
         const settings = SettingsManager.load();
-        const uttr = new SpeechSynthesisUtterance(text);
         
         // 言語設定の優先
         const langMode = customLang || settings.voiceMode;
+        let speakText = text;
+
+        if (langMode === 'en') {
+            // アルファベット単文字の場合は大文字化し、必要に応じて誤読防止テキストに変換
+            const charKey = text ? text.trim().toUpperCase() : '';
+            if (charKey && this.englishLetterMap[charKey]) {
+                speakText = this.englishLetterMap[charKey];
+            } else if (charKey && charKey.length === 1 && charKey >= 'A' && charKey <= 'Z') {
+                speakText = charKey;
+            }
+        }
+
+        const uttr = new SpeechSynthesisUtterance(speakText);
+        
         if (langMode === 'en') {
             uttr.lang = 'en-US';
             uttr.rate = 0.8;
+            const enVoice = this.getBestVoice('en');
+            if (enVoice) {
+                uttr.voice = enVoice;
+            }
         } else {
             uttr.lang = 'ja-JP';
             uttr.rate = 1.0;
+            const jaVoice = this.getBestVoice('ja');
+            if (jaVoice) {
+                uttr.voice = jaVoice;
+            }
         }
         
         window.speechSynthesis.speak(uttr);
@@ -146,6 +244,11 @@ const SpeechManager = {
         }
     }
 };
+
+// スクリプト読み込み時にボイス一覧の事前初期化を試行
+if (typeof window !== 'undefined') {
+    SpeechManager.initVoices();
+}
 
 // ----------------------------------------------------
 // 4. Navigation (確認モーダルの動的生成・制御)
